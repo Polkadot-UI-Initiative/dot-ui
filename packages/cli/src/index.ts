@@ -38,7 +38,12 @@ program
     };
 
     const addCommand = new AddCommand(options);
-    await addCommand.execute(componentName);
+    try {
+      await addCommand.execute(componentName);
+    } finally {
+      // Ensure telemetry is properly flushed
+      await (addCommand as any).telemetry?.shutdown?.();
+    }
   });
 
 // Init command
@@ -54,7 +59,12 @@ program
     };
 
     const initCommand = new InitCommand(options);
-    await initCommand.execute();
+    try {
+      await initCommand.execute();
+    } finally {
+      // Ensure telemetry is properly flushed
+      await (initCommand as any).telemetry?.shutdown?.();
+    }
   });
 
 // List command
@@ -70,7 +80,12 @@ program
     };
 
     const listCommand = new ListCommand(options);
-    await listCommand.execute();
+    try {
+      await listCommand.execute();
+    } finally {
+      // Ensure telemetry is properly flushed (ListCommand doesn't have telemetry)
+      await (listCommand as any).telemetry?.shutdown?.();
+    }
   });
 
 // Help command

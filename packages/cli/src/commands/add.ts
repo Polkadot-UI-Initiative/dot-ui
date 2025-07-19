@@ -58,9 +58,21 @@ export class AddCommand {
         return;
       }
 
-      // Track installation start
+      // Track command usage and component addition start
       const framework = projectStructure.isNextJs ? "nextjs" : "vite";
-      await this.telemetry.trackInstallStart(componentInfo.name, framework);
+      await this.telemetry.trackCommandUsed("add", {
+        framework,
+        has_typescript: projectStructure.hasTypeScript,
+        package_manager: projectStructure.packageManager as any,
+        project_type: projectStructure.isNextJs ? "nextjs" : "vite",
+      });
+
+      await this.telemetry.trackComponentAddStarted(componentInfo.name, {
+        framework,
+        has_typescript: projectStructure.hasTypeScript,
+        package_manager: projectStructure.packageManager as any,
+        project_type: projectStructure.isNextJs ? "nextjs" : "vite",
+      });
 
       // Step 4: Detect Polkadot API setup
       const polkadotConfig = await this.detectPolkadotSetup(componentInfo);
@@ -75,13 +87,20 @@ export class AddCommand {
       // Step 6: Show completion message
       this.showCompletionMessage(componentInfo, polkadotConfig);
 
-      // Track successful installation
+      // Track successful component addition
       const duration = Date.now() - startTime;
-      await this.telemetry.trackInstallSuccess(componentInfo.name, framework, {
-        hasTypeScript: projectStructure.hasTypeScript,
-        hasTailwind: true, // We always install Tailwind
-        packageManager: projectStructure.packageManager,
-        duration,
+      const selectedLibrary = this.registry.getSelectedLibrary() || "unknown";
+      await this.telemetry.trackComponentAddCompleted(componentInfo.name, {
+        framework,
+        has_typescript: projectStructure.hasTypeScript,
+        has_tailwind: true, // We always install Tailwind
+        package_manager: projectStructure.packageManager as any,
+        polkadot_library:
+          selectedLibrary === "unknown" ? "unknown" : selectedLibrary,
+        registry_type:
+          selectedLibrary === "unknown" ? undefined : selectedLibrary,
+        duration_ms: duration,
+        project_type: projectStructure.isNextJs ? "nextjs" : "vite",
       });
     } catch (error) {
       await this.handleInstallationError(error, componentName, startTime);
@@ -314,6 +333,10 @@ export class AddCommand {
         `Component dependencies: ${JSON.stringify(componentInfo.dependencies)}`
       );
 
+      // Track library detection for telemetry
+      let selectedLibrary: "papi" | "dedot" = "papi"; // Default fallback
+      let wasPrompted = false;
+
       // Handle case where no library is detected - prompt user
       if (library === "none") {
         spinner.stop();
@@ -324,11 +347,13 @@ export class AddCommand {
         );
 
         // Prompt user for library choice
-        const selectedLibrary =
-          await this.polkadotDetector.promptForLibrarySelection({
+        selectedLibrary = await this.polkadotDetector.promptForLibrarySelection(
+          {
             skipPrompt: this.options.yes,
             defaultLibrary: "papi",
-          });
+          }
+        );
+        wasPrompted = true;
 
         // Tell the registry about the user's choice so it fetches the right files
         this.registry.setSelectedLibrary(selectedLibrary);
@@ -340,11 +365,21 @@ export class AddCommand {
           "The library will be installed and configured automatically."
         );
 
+        // Track library detection and selection
+        await this.telemetry.trackLibraryDetected(
+          "none",
+          selectedLibrary,
+          wasPrompted
+        );
+
         return polkadotConfig;
       }
 
       // Provide status based on detected library
       if (library === "papi") {
+        selectedLibrary = "papi";
+        this.registry.setSelectedLibrary(selectedLibrary);
+
         if (polkadotConfig.hasExistingConfig) {
           spinner.succeed(
             `Polkadot API (papi) detected with ${polkadotConfig.existingChains.length} chains`
@@ -358,8 +393,17 @@ export class AddCommand {
           );
         }
       } else if (library === "dedot") {
+        selectedLibrary = "dedot";
+        this.registry.setSelectedLibrary(selectedLibrary);
         spinner.succeed("Dedot detected - will use existing setup");
       }
+
+      // Track library detection and selection
+      await this.telemetry.trackLibraryDetected(
+        library as "papi" | "dedot" | "none",
+        selectedLibrary,
+        wasPrompted
+      );
 
       return polkadotConfig;
     } catch (error) {
@@ -808,8 +852,8 @@ export class AddCommand {
     const errorMessage =
       error instanceof Error ? error.message : "An unexpected error occurred";
 
-    // Track installation error
-    await this.telemetry.trackInstallError(componentName, errorMessage);
+    // Track component addition error
+    await this.telemetry.trackComponentAddFailed(componentName, errorMessage);
 
     logger.error("Component installation failed");
     logger.error(errorMessage);

@@ -76,7 +76,7 @@
           "type": "registry:hook"
         },
         {
-          "path": "registry/dot-ui/lib/address-validation.ts",
+          "path": "registry/dot-ui/blocks/address-input/lib/address-validation.ts",
           "type": "registry:lib"
         },
         {

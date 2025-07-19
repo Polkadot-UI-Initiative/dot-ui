@@ -31,8 +31,18 @@ export class InitCommand {
       // Step 1: Get project configuration
       setupConfig = await this.promptProjectSetup();
 
-      // Track initialization start
-      await this.telemetry.trackInitStart(setupConfig.framework);
+      // Track command usage and initialization start
+      await this.telemetry.trackCommandUsed("init", {
+        framework: setupConfig.framework,
+        has_typescript: setupConfig.useTypeScript,
+        has_tailwind: setupConfig.useTailwind,
+      });
+
+      await this.telemetry.trackProjectInitStarted(setupConfig.framework, {
+        has_typescript: setupConfig.useTypeScript,
+        has_tailwind: setupConfig.useTailwind,
+        project_type: setupConfig.framework,
+      });
 
       // Step 2: Create project structure
       await this.createProject(setupConfig);
@@ -48,11 +58,11 @@ export class InitCommand {
 
       // Track successful initialization
       const duration = Date.now() - startTime;
-      await this.telemetry.trackInitSuccess(setupConfig.framework, {
-        hasTypeScript: setupConfig.useTypeScript,
-        hasTailwind: setupConfig.useTailwind,
-        packageManager: await this.projectDetector.detectPackageManager(),
-        duration,
+      await this.telemetry.trackProjectInitCompleted(setupConfig.framework, {
+        has_typescript: setupConfig.useTypeScript,
+        has_tailwind: setupConfig.useTailwind,
+        package_manager: await this.projectDetector.detectPackageManager(),
+        duration_ms: duration,
       });
     } catch (error) {
       await this.handleInitializationError(error, setupConfig, startTime);

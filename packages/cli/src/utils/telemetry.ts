@@ -1,29 +1,58 @@
+import { PostHog } from "posthog-node";
 import type { CliOptions } from "../types/index.js";
 
-interface TelemetryEvent {
-  event:
-    | "install_start"
-    | "install_success"
-    | "install_error"
-    | "init_start"
-    | "init_success";
-  component?: string;
+interface BaseEventProperties {
+  cli_version: string;
   framework?: "nextjs" | "vite";
-  version: string;
-  timestamp: number;
-  error?: string;
-  metadata?: {
-    hasTypeScript?: boolean;
-    hasTailwind?: boolean;
-    packageManager?: string;
-    duration?: number;
-  };
+  has_typescript?: boolean;
+  has_tailwind?: boolean;
+  package_manager?: "npm" | "yarn" | "pnpm" | "bun";
+  polkadot_library?: "papi" | "dedot" | "unknown";
+  component_name?: string;
+  registry_type?: "papi" | "dedot";
+  duration_ms?: number;
+  error_message?: string;
+  project_type?: string;
+  node_version?: string;
+  os_platform?: string;
+  command?: "add" | "init" | "list";
+  detected_library?: "papi" | "dedot" | "none";
+  selected_library?: "papi" | "dedot";
+  was_prompted?: boolean;
 }
 
 export class Telemetry {
-  private static readonly TELEMETRY_URL = "https://dot-ui.com/api/telemetry";
+  private static readonly POSTHOG_API_KEY =
+    "phc_EqCg3vk7Pr5qqshg6YbHBM3ghYZPkc8IDLzhjqLtJwf";
+  private static readonly POSTHOG_HOST = "https://eu.i.posthog.com";
+  private postHog: PostHog | null = null;
 
-  constructor(private options: CliOptions) {}
+  constructor(private options: CliOptions) {
+    console.log(`  Working Directory: ${process.cwd()}`);
+
+    this.initializePostHog();
+  }
+
+  /**
+   * Initialize PostHog client
+   */
+  private initializePostHog(): void {
+    // Skip telemetry in dev mode or if explicitly disabled
+    if (process.env.DOT_UI_DISABLE_TELEMETRY === "true") {
+      return;
+    }
+
+    try {
+      this.postHog = new PostHog(Telemetry.POSTHOG_API_KEY, {
+        host: Telemetry.POSTHOG_HOST,
+        flushAt: 1, // Send events immediately for CLI usage
+        flushInterval: 0, // Disable batching
+      });
+      console.log("PostHog initialized with key:", Telemetry.POSTHOG_API_KEY);
+    } catch (error) {
+      console.debug("Failed to initialize PostHog:", error);
+    }
+  }
 
   /**
    * Get CLI version from package.json
@@ -50,129 +79,213 @@ export class Telemetry {
   }
 
   /**
-   * Send telemetry event (fails silently if disabled or errors)
+   * Get system information for telemetry
    */
-  async sendEvent(
-    eventData: Omit<TelemetryEvent, "version" | "timestamp">
+  private async getSystemInfo(): Promise<Partial<BaseEventProperties>> {
+    try {
+      const os = await import("os");
+
+      return {
+        node_version: process.version,
+        os_platform: os.platform(),
+      };
+    } catch {
+      return {};
+    }
+  }
+
+  /**
+   * Generate a unique user ID based on machine characteristics
+   */
+  private async getUserId(): Promise<string> {
+    try {
+      const crypto = await import("crypto");
+      const os = await import("os");
+
+      // Create a hash based on hostname and user info
+      const identifier = `${os.hostname()}-${os.userInfo().username}`;
+      return crypto.createHash("sha256").update(identifier).digest("hex");
+    } catch {
+      // Fallback to random ID
+      return Math.random().toString(36).substring(7);
+    }
+  }
+
+  /**
+   * Send event to PostHog using the official client
+   */
+  private async sendToPostHog(
+    event: string,
+    properties: BaseEventProperties
   ): Promise<void> {
+    console.log("Sending event to PostHog:", event);
+    console.log("Properties:", properties);
+    console.log("Dev mode:", this.options.dev);
+    console.log("Disable telemetry:", process.env.DOT_UI_DISABLE_TELEMETRY);
+
     // Skip telemetry in dev mode or if explicitly disabled
-    if (this.options.dev || process.env.POLKA_UI_DISABLE_TELEMETRY === "true") {
+    if (process.env.DOT_UI_DISABLE_TELEMETRY === "true" || !this.postHog) {
       return;
     }
 
+    console.log("will send to posthog");
+
     try {
-      const event: TelemetryEvent = {
-        ...eventData,
-        version: await this.getCliVersion(),
-        timestamp: Date.now(),
-      };
+      const userId = await this.getUserId();
+      const systemInfo = await this.getSystemInfo();
 
-      // Use AbortController for timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000);
+      console.log("userId", userId);
+      console.log("systemInfo", systemInfo);
 
-      const response = await fetch(Telemetry.TELEMETRY_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "User-Agent": `polka-ui-cli/${event.version}`,
+      // Capture event with PostHog client
+      this.postHog.capture({
+        distinctId: userId,
+        event,
+        properties: {
+          ...properties,
+          ...systemInfo,
+          $lib: "dot-ui-cli",
+          $lib_version: properties.cli_version,
         },
-        body: JSON.stringify(event),
-        signal: controller.signal,
       });
 
-      clearTimeout(timeoutId);
-
-      // Don't throw on HTTP errors, just log for debugging
-      if (!response.ok) {
-        console.debug(`Telemetry failed: ${response.status}`);
-      }
+      // Ensure events are sent immediately for CLI usage
+      await this.postHog.flush();
     } catch (error) {
       // Silently fail - telemetry should never break the CLI
       console.debug(
-        "Telemetry error:",
+        "PostHog telemetry error:",
         error instanceof Error ? error.message : "Unknown error"
       );
     }
   }
 
   /**
-   * Track component installation start
+   * Cleanup PostHog client
    */
-  async trackInstallStart(
-    component: string,
-    framework?: "nextjs" | "vite"
-  ): Promise<void> {
-    await this.sendEvent({
-      event: "install_start",
-      component,
-      framework,
-    });
-  }
-
-  /**
-   * Track successful component installation
-   */
-  async trackInstallSuccess(
-    component: string,
-    framework: "nextjs" | "vite",
-    metadata: {
-      hasTypeScript?: boolean;
-      hasTailwind?: boolean;
-      packageManager?: string;
-      duration?: number;
+  async shutdown(): Promise<void> {
+    if (this.postHog) {
+      await this.postHog.shutdown();
     }
+  }
+
+  /**
+   * Track when user starts adding a component
+   */
+  async trackComponentAddStarted(
+    componentName: string,
+    properties: Partial<BaseEventProperties> = {}
   ): Promise<void> {
-    await this.sendEvent({
-      event: "install_success",
-      component,
-      framework,
-      metadata,
+    await this.sendToPostHog("Component Add Started", {
+      cli_version: await this.getCliVersion(),
+      component_name: componentName,
+      ...properties,
     });
   }
 
   /**
-   * Track installation error
+   * Track successful component addition
    */
-  async trackInstallError(
-    component: string,
-    error: string,
-    framework?: "nextjs" | "vite"
+  async trackComponentAddCompleted(
+    componentName: string,
+    properties: Partial<BaseEventProperties> = {}
   ): Promise<void> {
-    await this.sendEvent({
-      event: "install_error",
-      component,
-      framework,
-      error: error.substring(0, 200), // Truncate error messages
+    await this.sendToPostHog("Component Add Completed", {
+      cli_version: await this.getCliVersion(),
+      component_name: componentName,
+      ...properties,
+    });
+  }
+
+  /**
+   * Track component addition failure
+   */
+  async trackComponentAddFailed(
+    componentName: string,
+    errorMessage: string,
+    properties: Partial<BaseEventProperties> = {}
+  ): Promise<void> {
+    await this.sendToPostHog("Component Add Failed", {
+      cli_version: await this.getCliVersion(),
+      component_name: componentName,
+      error_message: errorMessage.substring(0, 200), // Truncate error messages
+      ...properties,
     });
   }
 
   /**
    * Track project initialization start
    */
-  async trackInitStart(framework: "nextjs" | "vite"): Promise<void> {
-    await this.sendEvent({
-      event: "init_start",
+  async trackProjectInitStarted(
+    framework: "nextjs" | "vite",
+    properties: Partial<BaseEventProperties> = {}
+  ): Promise<void> {
+    await this.sendToPostHog("Project Init Started", {
+      cli_version: await this.getCliVersion(),
       framework,
+      ...properties,
     });
   }
 
   /**
    * Track successful project initialization
    */
-  async trackInitSuccess(
+  async trackProjectInitCompleted(
     framework: "nextjs" | "vite",
-    metadata: {
-      hasTypeScript?: boolean;
-      hasTailwind?: boolean;
-      packageManager?: string;
-      duration?: number;
-    }
+    properties: Partial<BaseEventProperties> = {}
   ): Promise<void> {
-    await this.sendEvent({
-      event: "init_success",
+    await this.sendToPostHog("Project Init Completed", {
+      cli_version: await this.getCliVersion(),
       framework,
-      metadata,
+      ...properties,
+    });
+  }
+
+  /**
+   * Track project initialization failure
+   */
+  async trackProjectInitFailed(
+    framework: "nextjs" | "vite",
+    errorMessage: string,
+    properties: Partial<BaseEventProperties> = {}
+  ): Promise<void> {
+    await this.sendToPostHog("Project Init Failed", {
+      cli_version: await this.getCliVersion(),
+      framework,
+      error_message: errorMessage.substring(0, 200),
+      ...properties,
+    });
+  }
+
+  /**
+   * Track CLI command usage
+   */
+  async trackCommandUsed(
+    command: "add" | "init" | "list",
+    properties: Partial<BaseEventProperties> = {}
+  ): Promise<void> {
+    await this.sendToPostHog("CLI Command Used", {
+      cli_version: await this.getCliVersion(),
+      command,
+      ...properties,
+    });
+  }
+
+  /**
+   * Track library detection and selection
+   */
+  async trackLibraryDetected(
+    detectedLibrary: "papi" | "dedot" | "none",
+    selectedLibrary: "papi" | "dedot",
+    wasPrompted: boolean,
+    properties: Partial<BaseEventProperties> = {}
+  ): Promise<void> {
+    await this.sendToPostHog("Polkadot Library Detected", {
+      cli_version: await this.getCliVersion(),
+      detected_library: detectedLibrary,
+      selected_library: selectedLibrary,
+      was_prompted: wasPrompted,
+      ...properties,
     });
   }
 }
