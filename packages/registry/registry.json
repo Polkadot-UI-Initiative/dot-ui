@@ -13,14 +13,71 @@
       "registryDependencies": ["button"],
       "files": [
         {
+          "path": "registry/dot-ui/blocks/block-number/page.papi.tsx",
+          "type": "registry:page",
+          "target": "app/dot-ui/blocks/block-number/page.tsx"
+        },
+        {
           "path": "registry/dot-ui/blocks/block-number/components/block-number.papi.tsx",
-          "type": "registry:component",
-          "target": "components/block-number.tsx"
+          "type": "registry:component"
         },
         {
           "path": "registry/dot-ui/blocks/block-number/hooks/use-block-number.papi.ts",
-          "type": "registry:hook",
-          "target": "hooks/use-block-number.ts"
+          "type": "registry:hook"
+        },
+        {
+          "path": "registry/dot-ui/providers/papi-provider.tsx",
+          "type": "registry:lib"
+        },
+        {
+          "path": "registry/dot-ui/lib/utils.polkadot-ui.ts",
+          "type": "registry:lib"
+        },
+        {
+          "path": "registry/dot-ui/lib/types.polkadot-ui.ts",
+          "type": "registry:lib"
+        },
+        {
+          "path": "registry/dot-ui/lib/config.dot-ui.ts",
+          "type": "registry:lib"
+        },
+        {
+          "path": "registry/dot-ui/lib/config.papi.ts",
+          "type": "registry:lib"
+        }
+      ]
+    },
+    {
+      "name": "address-input",
+      "type": "registry:component",
+      "title": "Address Input (PAPI)",
+      "description": "A comprehensive address input component with SS58/Ethereum validation and identity lookup using polkadot-api.",
+      "dependencies": [
+        "@polkadot/keyring",
+        "@polkadot/util",
+        "ethers",
+        "@tanstack/react-query",
+        "polkadot-api"
+      ],
+      "requiresPolkadotApi": true,
+      "registryDependencies": ["input", "label", "badge", "button"],
+      "files": [
+        {
+          "path": "registry/dot-ui/blocks/address-input/page.papi.tsx",
+          "type": "registry:page",
+          "target": "app/dot-ui/blocks/address-input/page.tsx"
+        },
+        {
+          "path": "registry/dot-ui/blocks/address-input/components/address-input.papi.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "registry/dot-ui/blocks/address-input/hooks/use-identity.papi.ts",
+          "type": "registry:hook"
+        },
+        {
+          "path": "registry/dot-ui/lib/address-validation.ts",
+          "type": "registry:lib"
         },
         {
           "path": "registry/dot-ui/providers/papi-provider.tsx",

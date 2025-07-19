@@ -14,6 +14,7 @@ import {
   getChainConfig,
   isValidChainId,
 } from "@/registry/dot-ui/lib/utils.polkadot-ui";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 // Type for the API based on configured chains
 type ConfiguredChainApi<T extends ChainId> = TypedApi<ChainDescriptor<T>>;
@@ -39,6 +40,7 @@ interface PolkadotContextValue {
   // Connection management
   disconnect: () => void;
   isConnected: (chainId: ChainId) => boolean;
+  initializeChain: (chainId: ChainId) => Promise<void>;
 
   // Chain information
   chainName: string | null;
@@ -166,13 +168,22 @@ export function PolkadotProvider({ children }: PolkadotProviderProps) {
     disconnect,
     isConnected,
     isLoading,
+    initializeChain,
     chainName: currentChainConfig.displayName,
     availableChains: getChainIds(polkadotConfig.chains),
   };
 
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        refetchOnWindowFocus: false,
+      },
+    },
+  });
+
   return (
     <PolkadotContext.Provider value={value}>
-      {children}
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     </PolkadotContext.Provider>
   );
 }
@@ -191,6 +202,30 @@ export function usePapi(): PolkadotContextValue {
 export function useTypedPolkadotApi(): ConfiguredChainApi<ChainId> | null {
   const { api } = usePapi();
   return api;
+}
+
+// Helper to get a specific chain's API (type-safe)
+export function usePolkadotApi<T extends ChainId>(
+  chainId: T
+): ConfiguredChainApi<T> | null {
+  const { apis, initializeChain } = usePapi();
+
+  // Auto-initialize the chain if not connected
+  useEffect(() => {
+    if (!apis[chainId]) {
+      initializeChain(chainId);
+    }
+  }, [chainId, apis, initializeChain]);
+
+  return (apis[chainId] as ConfiguredChainApi<T>) || null;
+}
+
+// Alternative: Direct function to get any chain API
+export function useChainApi(
+  chainId: ChainId
+): ConfiguredChainApi<ChainId> | null {
+  const { apis } = usePapi();
+  return apis[chainId] || null;
 }
 
 // Type exports

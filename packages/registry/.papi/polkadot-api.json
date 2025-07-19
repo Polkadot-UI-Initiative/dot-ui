@@ -13,6 +13,12 @@
       "metadata": ".papi/metadata/paseo_asset_hub.scale",
       "genesis": "0xd6eec26135305a8ad257a20d003357284c8aa03d0bdb2b357ab0a22371e11ef2",
       "codeHash": "0xb7f52ff9b4fb5124568a5b8cbfcebba2bc9318bcb5916b69457c10bc6a2d0ac5"
+    },
+    "paseo_people": {
+      "chain": "paseo_people",
+      "metadata": ".papi/metadata/paseo_people.scale",
+      "genesis": "0xe6c30d6e148f250b887105237bcaa5cb9f16dd203bf7b5b9d4f1da7387cb86ec",
+      "codeHash": "0x08900cf7113b3e152f7887796b5311f01a6eda32684425c0d2794b542c9dd739"
     }
   }
 }

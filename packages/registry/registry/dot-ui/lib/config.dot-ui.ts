@@ -21,6 +21,14 @@ export const dotUiConfig: DotUiConfig = {
       },
       isTestnet: true,
     },
+    paseo_people: {
+      endpoints: ["wss://sys.ibp.network/people-paseo"],
+      displayName: "Paseo People",
+      explorerUrls: {
+        [SubstrateExplorer.PolkadotJs]: `https://polkadot.js.org/apps/?rpc=${encodeURIComponent("wss://sys.ibp.network/people-paseo")}#/explorer`,
+      },
+      isTestnet: true,
+    },
   },
   defaultChain: "paseo_asset_hub",
 };

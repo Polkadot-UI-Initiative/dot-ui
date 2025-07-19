@@ -1,5 +1,5 @@
 import { HeroSection } from "@/components/layout/hero-section";
-import { ExamplesSection } from "@/components/layout/examples-section";
+import { ExamplesSection } from "@/components/layout/components-section";
 
 export default function Home() {
   return (

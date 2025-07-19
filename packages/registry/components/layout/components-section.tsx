@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BlockNumber } from "@/registry/dot-ui/blocks/block-number/components/block-number.papi";
+
 import {
   Card,
   CardContent,
@@ -9,12 +9,23 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+import { BlockNumber } from "@/registry/dot-ui/blocks/block-number/components/block-number.papi";
+import { AddressInput } from "@/registry/dot-ui/blocks/address-input/components/address-input.papi";
+
 const examples = [
   {
-    name: "Block Number",
-    href: "/blocks",
+    name: "Address Input",
+    href: "/docs/components/address-input",
+    code: "address-input",
+    description:
+      "Input component with SS58/Ethereum validation and identity lookup",
+    component: <AddressInput className="w-full" truncate={8} />,
+  },
+  {
+    name: "Block Number DEMO",
+    href: "/docs/components/block-number",
     code: "block-number",
-    description: "Display the current block number on a chain",
+    description: "Will not be part of the library",
     component: <BlockNumber />,
   },
 ];

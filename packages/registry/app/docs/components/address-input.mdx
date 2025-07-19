@@ -1,0 +1,114 @@
+---
+title: Address Input
+description: A comprehensive address input component with SS58/Ethereum validation and identity lookup.
+---
+
+## Introduction
+
+AddressInput is a comprehensive input component for Polkadot and Ethereum addresses with real-time validation and identity lookup.
+
+## Features
+
+- ✅ **Address Validation**: Real-time validation for SS58 (Polkadot) and Ethereum addresses
+- ✅ **Identity Lookup**: Automatic Polkadot identity resolution using PAPI
+- ✅ **Visual Feedback**: Color-coded validation states and loading indicators
+- ✅ **Flexible Formats**: Support for SS58, Ethereum, or both address types
+- ✅ **TypeScript**: Full type safety with comprehensive interfaces
+- ✅ **Customizable**: Optional identicon, truncation, and styling options
+
+## Installation
+
+```bash
+npx polka-ui@latest add address-input
+```
+
+## Usage
+
+### Basic Example
+
+```tsx
+import { AddressInput } from "@/components/ui/address-input";
+
+function MyComponent() {
+  const [address, setAddress] = useState("");
+
+  return (
+    <AddressInput
+      label="Recipient Address"
+      placeholder="Enter Polkadot address..."
+      value={address}
+      onChange={setAddress}
+      format="ss58"
+      withIdentityLookup={true}
+    />
+  );
+}
+```
+
+### Multiple Formats
+
+```tsx
+<AddressInput
+  format="both"
+  placeholder="Enter any address..."
+  withIdentityLookup={true}
+/>
+```
+
+### With Identity Callback
+
+```tsx
+<AddressInput
+  format="ss58"
+  onIdentityFound={(identity) => {
+    console.log("Found identity:", identity.data.display);
+  }}
+/>
+```
+
+### Truncated Display
+
+```tsx
+<AddressInput
+  format="both"
+  truncate={6}  // Shows first 6 and last 6 characters
+/>
+```
+
+## Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `value` | `string` | `""` | Current input value |
+| `onChange` | `(value: string) => void` | - | Called when valid address is entered |
+| `label` | `string` | - | Label text above input |
+| `placeholder` | `string` | - | Placeholder text |
+| `disabled` | `boolean` | `false` | Disable the input |
+| `format` | `"ss58" \| "eth" \| "both"` | `"ss58"` | Address format(s) to accept |
+| `withIdentityLookup` | `boolean` | `true` | Enable Polkadot identity lookup |
+| `onIdentityFound` | `(identity: IdentityResult) => void` | - | Called when identity is found |
+| `truncate` | `boolean \| number` | `false` | Truncate display (true=8 chars) |
+| `showIdenticon` | `boolean` | `true` | Show address identicon |
+| `className` | `string` | - | Additional CSS classes |
+
+## Validation States
+
+The component shows different visual states:
+
+- **Valid**: Green border with checkmark
+- **Invalid**: Red border with error message
+- **Loading**: Spinner while checking identity
+- **Disconnected**: Warning when chain not connected
+
+## Identity Lookup
+
+When `withIdentityLookup` is enabled:
+
+1. Valid SS58 addresses trigger identity lookup
+2. Displays identity name if found
+3. Shows verification status
+4. Includes "PAPI" badge to indicate API source
+
+## Examples
+
+For live examples and interactive demos, visit the [AddressInput Examples](/docs/components/address-input/examples) page. 
