@@ -28,8 +28,6 @@ export class Telemetry {
   private postHog: PostHog | null = null;
 
   constructor(private options: CliOptions) {
-    console.log(`  Working Directory: ${process.cwd()}`);
-
     this.initializePostHog();
   }
 
@@ -48,7 +46,6 @@ export class Telemetry {
         flushAt: 1, // Send events immediately for CLI usage
         flushInterval: 0, // Disable batching
       });
-      console.log("PostHog initialized with key:", Telemetry.POSTHOG_API_KEY);
     } catch (error) {
       console.debug("Failed to initialize PostHog:", error);
     }
@@ -118,24 +115,14 @@ export class Telemetry {
     event: string,
     properties: BaseEventProperties
   ): Promise<void> {
-    console.log("Sending event to PostHog:", event);
-    console.log("Properties:", properties);
-    console.log("Dev mode:", this.options.dev);
-    console.log("Disable telemetry:", process.env.DOT_UI_DISABLE_TELEMETRY);
-
     // Skip telemetry in dev mode or if explicitly disabled
     if (process.env.DOT_UI_DISABLE_TELEMETRY === "true" || !this.postHog) {
       return;
     }
 
-    console.log("will send to posthog");
-
     try {
       const userId = await this.getUserId();
       const systemInfo = await this.getSystemInfo();
-
-      console.log("userId", userId);
-      console.log("systemInfo", systemInfo);
 
       // Capture event with PostHog client
       this.postHog.capture({

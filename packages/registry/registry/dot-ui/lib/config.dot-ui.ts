@@ -2,17 +2,6 @@ import { DotUiConfig, SubstrateExplorer } from "./types.polkadot-ui";
 
 export const dotUiConfig: DotUiConfig = {
   chains: {
-    paseo_asset_hub: {
-      endpoints: [
-        "wss://sys.ibp.network/asset-hub-paseo",
-        "wss://asset-hub-paseo.dotters.network",
-      ],
-      displayName: "Paseo Asset Hub",
-      explorerUrls: {
-        [SubstrateExplorer.PolkadotJs]: `https://polkadot.js.org/apps/?rpc=${encodeURIComponent("wss://sys.ibp.network/asset-hub-paseo")}#/explorer`,
-      },
-      isTestnet: true,
-    },
     paseo: {
       endpoints: ["wss://sys.ibp.network/paseo", "wss://paseo.dotters.network"],
       displayName: "Paseo Relay Chain",
@@ -30,7 +19,7 @@ export const dotUiConfig: DotUiConfig = {
       isTestnet: true,
     },
   },
-  defaultChain: "paseo_asset_hub",
+  defaultChain: "paseo",
 };
 
 // Simple type aliases for type safety

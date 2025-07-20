@@ -6,17 +6,23 @@ import { Label } from "@/registry/dot-ui/ui/label";
 import { Badge } from "@/registry/dot-ui/ui/badge";
 import { Loader2, Copy, Check, CircleCheck } from "lucide-react";
 import { Identicon } from "@polkadot/react-identicon";
+import { type IconTheme } from "@polkadot/react-identicon/types";
 
 import { cn } from "@/registry/dot-ui/lib/utils";
-import { usePapi } from "@/registry/dot-ui/providers/papi-provider";
-import { usePolkadotIdentity } from "../hooks/use-identity.papi";
-import { useIdentityByDisplayName } from "../hooks/use-search-identity.papi";
+import {
+  usePapi,
+  PolkadotProvider,
+} from "@/registry/dot-ui/providers/papi-provider";
+import { usePolkadotIdentity } from "@/registry/dot-ui/blocks/address-input/hooks/use-identity.papi";
+import { useIdentityByDisplayName } from "@/registry/dot-ui/blocks/address-input/hooks/use-search-identity.papi";
 import {
   validateAddress,
   truncateAddress,
   type ValidationResult,
-} from "@/registry/dot-ui/blocks/address-input/lib/address-validation";
+} from "@/registry/dot-ui/lib/utils.polkadot-ui";
 import { Button } from "@/registry/dot-ui/ui/button";
+import type { ChainId } from "@/registry/dot-ui/lib/config.papi";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 export interface AddressInputProps {
   value?: string;
@@ -33,6 +39,8 @@ export interface AddressInputProps {
   ethProviderUrl?: string;
   truncate?: boolean | number;
   showIdenticon?: boolean;
+  identiconTheme?: IconTheme;
+
   className?: string;
 }
 
@@ -61,6 +69,8 @@ export const AddressInput = forwardRef<HTMLInputElement, AddressInputProps>(
       // ethProviderUrl, // TODO: Implement ENS lookup
       truncate = false,
       showIdenticon = true,
+      identiconTheme = "polkadot",
+
       className,
       ...props
     },
@@ -252,9 +262,11 @@ export const AddressInput = forwardRef<HTMLInputElement, AddressInputProps>(
             className={cn(
               "mb-2",
               showIdenticon && validationResult?.isValid && "pl-10",
-              validationResult?.isValid === false &&
+              inputValue.trim() &&
+                validationResult?.isValid === false &&
                 "border-red-500 focus:border-red-500",
-              validationResult?.isValid === true &&
+              inputValue.trim() &&
+                validationResult?.isValid === true &&
                 "border-green-500 focus:border-green-500",
               className
             )}
@@ -298,8 +310,13 @@ export const AddressInput = forwardRef<HTMLInputElement, AddressInputProps>(
                       <div className="flex items-center gap-2 flex-1 min-w-0">
                         <Identicon
                           value={result.address}
-                          size={20}
-                          theme="polkadot"
+                          size={24}
+                          theme={
+                            validateAddress(result.address, format).type ===
+                            "eth"
+                              ? "ethereum"
+                              : identiconTheme
+                          }
                         />
                         <span className="text-sm font-medium truncate text-foreground">
                           {result.identity.display}
@@ -324,8 +341,14 @@ export const AddressInput = forwardRef<HTMLInputElement, AddressInputProps>(
 
           {/* Identicon placeholder */}
           {showIdenticon && validationResult?.isValid && (
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center">
-              <Identicon value={inputValue} size={20} theme="polkadot" />
+            <div className="absolute left-2 top-1/2 -translate-y-1/2 flex items-center justify-center">
+              <Identicon
+                value={inputValue}
+                size={26}
+                theme={
+                  validationResult.type === "eth" ? "ethereum" : identiconTheme
+                }
+              />
             </div>
           )}
 
@@ -424,3 +447,25 @@ export const AddressInput = forwardRef<HTMLInputElement, AddressInputProps>(
 );
 
 AddressInput.displayName = "AddressInput";
+
+// Wrapped version with provider for drop-in usage
+export interface AddressInputWithProviderProps extends AddressInputProps {
+  chainId?: ChainId;
+}
+
+export function AddressInputWithProvider({
+  chainId,
+  ...props
+}: AddressInputWithProviderProps) {
+  const queryClient = new QueryClient();
+
+  return (
+    <PolkadotProvider defaultChain={chainId}>
+      <QueryClientProvider client={queryClient}>
+        <AddressInput {...props} />
+      </QueryClientProvider>
+    </PolkadotProvider>
+  );
+}
+
+AddressInputWithProvider.displayName = "AddressInputWithProvider";

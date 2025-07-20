@@ -208,9 +208,10 @@ export class AddCommand {
    * Handle missing project scenario
    */
   private async handleMissingProject(): Promise<ProjectStructure | null> {
-    let shouldCreateProject = this.options.yes;
+    let shouldCreateProject = !this.options.interactive; // Auto-create in fast mode
 
-    if (!this.options.yes) {
+    if (this.options.interactive) {
+      // Interactive mode: ask the user
       const result = await inquirer.prompt([
         {
           type: "confirm",
@@ -222,7 +223,7 @@ export class AddCommand {
       shouldCreateProject = result.shouldCreateProject;
     } else {
       logger.info(
-        "No project found. Creating new project automatically (--yes flag)"
+        "No project found. Creating new project automatically (fast mode)"
       );
     }
 
@@ -233,7 +234,7 @@ export class AddCommand {
 
     // Run init command to set up the project
     try {
-      const initCommand = new InitCommand(this.options);
+      const initCommand = new InitCommand(this.options, "from-add");
       await initCommand.execute();
 
       // Wait for file system to sync
@@ -346,10 +347,10 @@ export class AddCommand {
           "This component requires a Polkadot API library to function."
         );
 
-        // Prompt user for library choice
+        // Always prompt user for library choice (essential question)
         selectedLibrary = await this.polkadotDetector.promptForLibrarySelection(
           {
-            skipPrompt: this.options.yes,
+            skipPrompt: false, // Always ask for library choice
             defaultLibrary: "papi",
           }
         );
@@ -470,7 +471,8 @@ export class AddCommand {
       const [executable, ...baseArgs] = runCommand.split(" ");
       const shadcnArgs = [shadcnVersion, "add", componentUrl];
 
-      if (this.options.yes) {
+      if (!this.options.interactive) {
+        // Fast mode: skip prompts
         shadcnArgs.push("--yes");
       }
 
@@ -523,8 +525,8 @@ export class AddCommand {
       const [executable, ...baseArgs] = runCommand.split(" ");
       const shadcnArgs = [shadcnVersion, "init"];
 
-      // Add explicit defaults when using --yes flag
-      if (this.options.yes) {
+      // Add explicit defaults in fast mode
+      if (!this.options.interactive) {
         shadcnArgs.push("--yes", "--base-color", "neutral", "--css-variables");
 
         // Detect if src directory is used
@@ -645,9 +647,7 @@ export class AddCommand {
 
     // If no chains are configured, install defaults
     logger.info("No chains configured, installing defaults");
-    const defaultChains = this.options.dev
-      ? ["paseo_asset_hub", "paseo"]
-      : ["polkadot"];
+    const defaultChains = ["paseo", "paseo_people"];
 
     logger.detail(`Installing default chains: ${defaultChains.join(", ")}`);
     await this.installMissingChains(defaultChains);

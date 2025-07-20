@@ -1,10 +1,6 @@
 // To add more chains, run: npx papi add <chain-name> -n <chain-name>
 // Then import the descriptor here and add it to the chains configuration
-import {
-  paseo_asset_hub,
-  paseo,
-  paseo_people,
-} from "@polkadot-api/descriptors";
+import { paseo, paseo_people } from "@polkadot-api/descriptors";
 import { definePolkadotConfig } from "@/registry/dot-ui/lib/types.polkadot-ui";
 import { dotUiConfig } from "./config.dot-ui";
 
@@ -12,10 +8,7 @@ export const polkadotConfig = definePolkadotConfig({
   ...dotUiConfig,
   chains: {
     ...dotUiConfig.chains,
-    paseo_asset_hub: {
-      ...dotUiConfig.chains.paseo_asset_hub,
-      descriptor: paseo_asset_hub,
-    },
+
     paseo: {
       ...dotUiConfig.chains.paseo,
       descriptor: paseo,
@@ -36,7 +29,7 @@ export const polkadotConfig = definePolkadotConfig({
     //   displayName: "Polkadot",
     // },
   },
-  defaultChain: "paseo_asset_hub",
+  defaultChain: "paseo",
 } as const);
 
 export type ChainId = keyof typeof polkadotConfig.chains;

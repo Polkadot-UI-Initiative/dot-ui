@@ -3,6 +3,9 @@ title: Address Input
 description: A comprehensive address input component with SS58/Ethereum validation and identity lookup.
 ---
 
+import { AddressInputWithProvider } from "@/registry/dot-ui/blocks/address-input/components/address-input.papi";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+
 ## Introduction
 
 AddressInput is a comprehensive input component for Polkadot and Ethereum addresses with real-time validation and identity lookup.
@@ -24,8 +27,16 @@ npx polka-ui@latest add address-input
 
 ## Usage
 
+
 ### Basic Example
 
+<Tabs defaultValue="preview" className="max-w-[600px]">
+  <TabsList>
+    <TabsTrigger value="preview">Preview</TabsTrigger>
+    <TabsTrigger value="code">Code</TabsTrigger>
+  </TabsList>
+  <TabsContent value="preview"><AddressInputWithProvider /></TabsContent>
+  <TabsContent value="code" className="my-0">
 ```tsx
 import { AddressInput } from "@/components/ui/address-input";
 
@@ -33,20 +44,30 @@ function MyComponent() {
   const [address, setAddress] = useState("");
 
   return (
-    <AddressInput
-      label="Recipient Address"
-      placeholder="Enter Polkadot address..."
-      value={address}
-      onChange={setAddress}
-      format="ss58"
-      withIdentityLookup={true}
-    />
+    <AddressInput value={address} onChange={setAddress} />
   );
 }
 ```
+</TabsContent>
+</Tabs>
+
+
 
 ### Multiple Formats
 
+<Tabs defaultValue="preview" className="max-w-[600px]">
+  <TabsList>
+    <TabsTrigger value="preview">Preview</TabsTrigger>
+    <TabsTrigger value="code">Code</TabsTrigger>
+  </TabsList>
+  <TabsContent value="preview">
+    <AddressInputWithProvider 
+      format="both"
+      placeholder="Enter any address..."
+      withIdentityLookup={true}
+    />
+  </TabsContent>
+  <TabsContent value="code" className="my-0">
 ```tsx
 <AddressInput
   format="both"
@@ -54,9 +75,23 @@ function MyComponent() {
   withIdentityLookup={true}
 />
 ```
+</TabsContent>
+</Tabs>
 
 ### With Identity Callback
 
+<Tabs defaultValue="preview" className="max-w-[600px]">
+  <TabsList>
+    <TabsTrigger value="preview">Preview</TabsTrigger>
+    <TabsTrigger value="code">Code</TabsTrigger>
+  </TabsList>
+  <TabsContent value="preview">
+    <AddressInputWithProvider 
+      format="ss58"
+      withIdentityLookup={true}
+    />
+  </TabsContent>
+  <TabsContent value="code" className="my-0">
 ```tsx
 <AddressInput
   format="ss58"
@@ -65,15 +100,102 @@ function MyComponent() {
   }}
 />
 ```
+</TabsContent>
+</Tabs>
 
 ### Truncated Display
 
+<Tabs defaultValue="preview" className="max-w-[600px]">
+  <TabsList>
+    <TabsTrigger value="preview">Preview</TabsTrigger>
+    <TabsTrigger value="code">Code</TabsTrigger>
+  </TabsList>
+  <TabsContent value="preview">
+    <AddressInputWithProvider 
+      format="both"
+      truncate={6}
+    />
+  </TabsContent>
+  <TabsContent value="code" className="my-0">
 ```tsx
 <AddressInput
   format="both"
   truncate={6}  // Shows first 6 and last 6 characters
 />
 ```
+</TabsContent>
+</Tabs>
+
+### Custom Identicon Themes
+
+#### Beachball Theme
+
+<Tabs defaultValue="preview" className="max-w-[600px]">
+  <TabsList>
+    <TabsTrigger value="preview">Preview</TabsTrigger>
+    <TabsTrigger value="code">Code</TabsTrigger>
+  </TabsList>
+  <TabsContent value="preview">
+    <AddressInputWithProvider 
+      format="ss58"
+      identiconTheme="beachball"
+    />
+  </TabsContent>
+  <TabsContent value="code" className="my-0">
+```tsx
+<AddressInput
+  format="ss58"
+  identiconTheme="beachball"  // Colorful beachball style
+/>
+```
+</TabsContent>
+</Tabs>
+
+#### Substrate Theme
+
+<Tabs defaultValue="preview" className="max-w-[600px]">
+  <TabsList>
+    <TabsTrigger value="preview">Preview</TabsTrigger>
+    <TabsTrigger value="code">Code</TabsTrigger>
+  </TabsList>
+  <TabsContent value="preview">
+    <AddressInputWithProvider 
+      format="ss58"
+      identiconTheme="substrate"
+    />
+  </TabsContent>
+  <TabsContent value="code" className="my-0">
+```tsx
+<AddressInput
+  format="ss58"
+  identiconTheme="substrate"  // Substrate theme
+/>
+```
+</TabsContent>
+</Tabs>
+
+#### JDenticon Theme
+
+<Tabs defaultValue="preview" className="max-w-[600px]">
+  <TabsList>
+    <TabsTrigger value="preview">Preview</TabsTrigger>
+    <TabsTrigger value="code">Code</TabsTrigger>
+  </TabsList>
+  <TabsContent value="preview">
+    <AddressInputWithProvider 
+      format="ss58"
+      identiconTheme="jdenticon"
+    />
+  </TabsContent>
+  <TabsContent value="code" className="my-0">
+```tsx
+<AddressInput
+  format="ss58"
+  identiconTheme="jdenticon"  // Jdenticon style
+/>
+```
+</TabsContent>
+</Tabs>
 
 ## Props
 
@@ -89,6 +211,7 @@ function MyComponent() {
 | `onIdentityFound` | `(identity: IdentityResult) => void` | - | Called when identity is found |
 | `truncate` | `boolean \| number` | `false` | Truncate display (true=8 chars) |
 | `showIdenticon` | `boolean` | `true` | Show address identicon |
+| `identiconTheme` | `"polkadot" \| "substrate" \| "beachball" \| "jdenticon"` | `"polkadot"` | Identicon visual theme |
 | `className` | `string` | - | Additional CSS classes |
 
 ## Validation States
@@ -109,6 +232,27 @@ When `withIdentityLookup` is enabled:
 3. Shows verification status
 4. Includes "PAPI" badge to indicate API source
 
+## Identicon Support
+
+The component automatically displays the appropriate identicon based on address type:
+
+### Polkadot/Substrate Addresses (SS58)
+Different visual themes available via the `identiconTheme` prop:
+
+- **`polkadot`** (default): Official Polkadot-style identicon with geometric patterns
+- **`substrate`**: Alternative Substrate-themed identicon style  
+- **`beachball`**: Colorful circular pattern resembling a beach ball
+- **`jdenticon`**: JDenticon style with geometric shapes and patterns
+
+### Ethereum Addresses
+- **Ethereum Identicons**: Automatically uses the `jdenticon` theme for ETH addresses
+- Ethereum addresses are converted to SS58 format for consistent identicon generation
+- Uses the same @polkadot/react-identicon library with specialized handling for Ethereum
+
+The component intelligently switches between identicon themes based on address type, providing a consistent visual experience.
+
 ## Examples
+
+<AddressInputWithProvider />
 
 For live examples and interactive demos, visit the [AddressInput Examples](/docs/components/address-input/examples) page. 

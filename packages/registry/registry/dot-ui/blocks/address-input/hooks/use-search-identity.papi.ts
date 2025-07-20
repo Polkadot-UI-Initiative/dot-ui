@@ -5,7 +5,7 @@ import {
   usePapi,
   usePolkadotApi,
 } from "@/registry/dot-ui/providers/papi-provider";
-import { extractText } from "../lib/extract-text";
+import { extractText } from "@/registry/dot-ui/lib/utils.polkadot-ui";
 
 export interface FormattedIdentity {
   display?: string;
@@ -34,7 +34,7 @@ export function useIdentityByDisplayName(
         !api ||
         !peopleApi ||
         !displayName ||
-        displayName.length === 0 ||
+        displayName.length < 3 ||
         isLoading(currentChain) ||
         !isConnected(currentChain)
       ) {

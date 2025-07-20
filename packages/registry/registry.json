@@ -51,12 +51,13 @@
       "name": "address-input",
       "type": "registry:component",
       "title": "Address Input (PAPI)",
-      "description": "A comprehensive address input component with SS58/Ethereum validation and identity lookup using polkadot-api.",
+      "description": "A comprehensive address input component with SS58/Ethereum validation, identity lookup using polkadot-api, and customizable identicon themes (polkadot, substrate, beachball, jdenticon).",
       "dependencies": [
         "@polkadot/keyring",
         "@polkadot/util",
         "ethers",
         "@tanstack/react-query",
+        "@polkadot/react-identicon",
         "polkadot-api"
       ],
       "requiresPolkadotApi": true,
@@ -65,7 +66,7 @@
         {
           "path": "registry/dot-ui/blocks/address-input/page.papi.tsx",
           "type": "registry:page",
-          "target": "app/dot-ui/blocks/address-input/page.tsx"
+          "target": "app/dot-ui/address-input/page.tsx"
         },
         {
           "path": "registry/dot-ui/blocks/address-input/components/address-input.papi.tsx",
@@ -76,9 +77,10 @@
           "type": "registry:hook"
         },
         {
-          "path": "registry/dot-ui/blocks/address-input/lib/address-validation.ts",
-          "type": "registry:lib"
+          "path": "registry/dot-ui/blocks/address-input/hooks/use-search-identity.papi.ts",
+          "type": "registry:hook"
         },
+
         {
           "path": "registry/dot-ui/providers/papi-provider.tsx",
           "type": "registry:lib"

@@ -14,7 +14,6 @@ import {
   getChainConfig,
   isValidChainId,
 } from "@/registry/dot-ui/lib/utils.polkadot-ui";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 // Type for the API based on configured chains
 type ConfiguredChainApi<T extends ChainId> = TypedApi<ChainDescriptor<T>>;
@@ -53,11 +52,15 @@ const PolkadotContext = createContext<PolkadotContextValue | undefined>(
 
 interface PolkadotProviderProps {
   children: React.ReactNode;
+  defaultChain?: ChainId;
 }
 
-export function PolkadotProvider({ children }: PolkadotProviderProps) {
+export function PolkadotProvider({
+  children,
+  defaultChain,
+}: PolkadotProviderProps) {
   const [currentChain, setCurrentChain] = useState<ChainId>(
-    polkadotConfig.defaultChain
+    defaultChain || polkadotConfig.defaultChain
   );
   const [apis, setApis] = useState<Partial<CompositeApi>>({});
   const [clients, setClients] = useState<
@@ -72,8 +75,8 @@ export function PolkadotProvider({ children }: PolkadotProviderProps) {
 
   // Initialize the default chain on mount
   useEffect(() => {
-    initializeChain(polkadotConfig.defaultChain);
-  }, []);
+    initializeChain(defaultChain || polkadotConfig.defaultChain);
+  }, [defaultChain]);
 
   const initializeChain = async (chainId: ChainId) => {
     // Don't initialize if already connected
@@ -143,7 +146,7 @@ export function PolkadotProvider({ children }: PolkadotProviderProps) {
     setApis({});
     setLoadingStates(new Map());
     setErrorStates(new Map());
-    setCurrentChain(polkadotConfig.defaultChain);
+    setCurrentChain(defaultChain || polkadotConfig.defaultChain);
   };
 
   const isConnected = (chainId: ChainId): boolean => {
@@ -173,17 +176,9 @@ export function PolkadotProvider({ children }: PolkadotProviderProps) {
     availableChains: getChainIds(polkadotConfig.chains),
   };
 
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: {
-        refetchOnWindowFocus: false,
-      },
-    },
-  });
-
   return (
     <PolkadotContext.Provider value={value}>
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      {children}
     </PolkadotContext.Provider>
   );
 }
@@ -218,14 +213,6 @@ export function usePolkadotApi<T extends ChainId>(
   }, [chainId, apis, initializeChain]);
 
   return (apis[chainId] as ConfiguredChainApi<T>) || null;
-}
-
-// Alternative: Direct function to get any chain API
-export function useChainApi(
-  chainId: ChainId
-): ConfiguredChainApi<ChainId> | null {
-  const { apis } = usePapi();
-  return apis[chainId] || null;
 }
 
 // Type exports

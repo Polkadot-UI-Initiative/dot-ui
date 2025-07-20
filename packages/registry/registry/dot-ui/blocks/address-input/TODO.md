@@ -15,9 +15,6 @@
 
 ### 🐛 Bug Fixes
 
-- [ ] Fix PAPI identity query syntax (currently using placeholder)
-- [ ] Resolve TypeScript type issues in identity hook
-- [ ] Test actual identity lookup with real PAPI connection
 - [ ] Verify address validation works with real addresses
 
 ### 🎨 UI Components

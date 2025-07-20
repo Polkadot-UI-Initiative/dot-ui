@@ -3,7 +3,7 @@ import {
   usePapi,
   usePolkadotApi,
 } from "@/registry/dot-ui/providers/papi-provider";
-import { extractText } from "../lib/extract-text";
+import { extractText } from "@/registry/dot-ui/lib/utils.polkadot-ui";
 
 export interface PolkadotIdentity {
   display?: string;
@@ -35,8 +35,6 @@ export function usePolkadotIdentity(address: string) {
 
         const identity = await identityQuery;
         if (!identity) return null;
-
-        console.log(identity);
 
         return {
           display: extractText(identity.info?.display?.value),

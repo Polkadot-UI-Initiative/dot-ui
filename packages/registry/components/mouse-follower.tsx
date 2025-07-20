@@ -9,13 +9,14 @@ interface DotPosition {
 
 const polkadotColors = [
   "#ff2670", // polkadot-pink
-  "#e4ff07", // polkadot-lime
-  "#07ffff", // polkadot-cyan
   "#7916f3", // polkadot-violet
+  "#07ffff", // polkadot-cyan
+  "#e4ff07", // polkadot-lime
   "#ff2670", // polkadot-pink again
 ];
 
-const dampingFactors = [0.15, 0.12, 0.09, 0.06, 0.03];
+// const dampingFactors = [0.15, 0.12, 0.09, 0.06, 0.03];
+const dampingFactors = [0.3, 0.2, 0.1];
 
 export function MouseFollower() {
   const [mousePosition, setMousePosition] = useState<DotPosition>({
@@ -23,7 +24,7 @@ export function MouseFollower() {
     y: 0,
   });
   const [dotPositions, setDotPositions] = useState<DotPosition[]>(
-    Array(5).fill({ x: 0, y: 0 })
+    Array(3).fill({ x: 0, y: 0 })
   );
 
   useEffect(() => {
@@ -59,7 +60,7 @@ export function MouseFollower() {
         };
 
         // Other dots follow the previous dot
-        for (let i = 1; i < 5; i++) {
+        for (let i = 1; i < 3; i++) {
           const prevDot = newPositions[i - 1];
           newPositions[i] = {
             x:
@@ -97,7 +98,6 @@ export function MouseFollower() {
             top: position.y - 5,
             backgroundColor: polkadotColors[index],
             opacity: 0.9,
-            mixBlendMode: "difference",
           }}
         />
       ))}

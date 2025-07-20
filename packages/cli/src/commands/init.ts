@@ -4,7 +4,7 @@ import execa from "execa";
 import path from "path";
 import fs from "fs/promises";
 import type { CliOptions, ProjectSetupConfig } from "../types/index.js";
-import { logger } from "../utils/logger.js";
+import { createLogger, Logger } from "../utils/logger.js";
 import { ProjectDetector } from "../utils/project-detector.js";
 import { Telemetry } from "../utils/telemetry.js";
 import { PolkadotDetector } from "../utils/polkadot-detector.js";
@@ -12,26 +12,44 @@ import { PolkadotDetector } from "../utils/polkadot-detector.js";
 export class InitCommand {
   private projectDetector: ProjectDetector;
   private telemetry: Telemetry;
+  private logger: Logger;
 
-  constructor(private options: CliOptions) {
+  constructor(
+    private options: CliOptions,
+    private context: "standalone" | "from-add" = "standalone"
+  ) {
+    this.logger = createLogger(options.verbose);
+    this.logger.detail(
+      "🏗️ InitCommand constructor - Initializing InitCommand with options: " +
+        JSON.stringify(options) +
+        " context: " +
+        context
+    );
     this.projectDetector = new ProjectDetector();
     this.telemetry = new Telemetry(options);
+    this.logger.detail("✅ InitCommand constructor - InitCommand ready");
   }
 
   /**
    * Main init command execution
    */
   async execute(): Promise<void> {
+    this.logger.detail("🚀 InitCommand.execute() - Starting init command");
     const startTime = Date.now();
     let setupConfig: ProjectSetupConfig | undefined;
 
     try {
-      logger.info("Initializing new project...");
+      this.logger.info("Initializing new project...");
 
       // Step 1: Get project configuration
+      this.logger.detail("📋 Step 1: Getting project configuration");
       setupConfig = await this.promptProjectSetup();
+      this.logger.detail(
+        "📋 Project config received: " + JSON.stringify(setupConfig)
+      );
 
       // Track command usage and initialization start
+      this.logger.detail("📊 Tracking telemetry events");
       await this.telemetry.trackCommandUsed("init", {
         framework: setupConfig.framework,
         has_typescript: setupConfig.useTypeScript,
@@ -43,20 +61,31 @@ export class InitCommand {
         has_tailwind: setupConfig.useTailwind,
         project_type: setupConfig.framework,
       });
+      this.logger.detail("📊 Telemetry events sent");
 
       // Step 2: Create project structure
+      this.logger.detail("🏗️ Step 2: Creating project structure");
       await this.createProject(setupConfig);
+      this.logger.detail("🏗️ Project structure created successfully");
 
       // Step 3: Install Polkadot library
+      this.logger.detail("🔗 Step 3: Installing Polkadot library");
       await this.installPolkadotLibrary(setupConfig);
+      this.logger.detail("🔗 Polkadot library installed successfully");
 
       // Step 4: Initialize shadcn/ui
+      this.logger.detail("🎨 Step 4: Initializing shadcn/ui");
       await this.initializeShadcn(setupConfig);
+      this.logger.detail("🎨 shadcn/ui initialized successfully");
 
       // Step 5: Success feedback
+      this.logger.detail(
+        "🎉 Step 5: Showing success message, context: " + this.context
+      );
       this.showSuccessMessage(setupConfig);
 
       // Track successful initialization
+      this.logger.detail("📊 Tracking completion telemetry");
       const duration = Date.now() - startTime;
       await this.telemetry.trackProjectInitCompleted(setupConfig.framework, {
         has_typescript: setupConfig.useTypeScript,
@@ -64,55 +93,63 @@ export class InitCommand {
         package_manager: await this.projectDetector.detectPackageManager(),
         duration_ms: duration,
       });
+      this.logger.detail(
+        "✅ InitCommand.execute() - Completed successfully in " +
+          duration +
+          "ms"
+      );
     } catch (error) {
+      this.logger.detail(
+        "❌ InitCommand.execute() - Error caught in main try/catch: " +
+          (error instanceof Error ? error.message : String(error))
+      );
       await this.handleInitializationError(error, setupConfig, startTime);
     }
   }
 
   /**
-   * Interactive project setup prompts
+   * Project setup prompts - always ask essential questions
    */
   private async promptProjectSetup(): Promise<ProjectSetupConfig> {
+    this.logger.detail("🔧 promptProjectSetup() - Starting project setup");
     const currentDir = path.basename(process.cwd());
+    this.logger.detail("📁 Current directory: " + currentDir);
+    this.logger.detail(
+      "⚙️ Options: " +
+        JSON.stringify({
+          verbose: this.options.verbose,
+          dev: this.options.dev,
+          interactive: this.options.interactive,
+        })
+    );
 
-    // If --yes flag is used, return defaults
-    if (this.options.yes) {
-      logger.info("Using --yes flag, using default configuration");
-      logger.detail(
-        "Framework: Next.js with TypeScript, Tailwind CSS, and papi"
-      );
-      logger.detail("To customize setup, run without --yes flag");
-
-      return this.getDefaultConfig(currentDir);
-    }
-
-    return await this.runInteractiveSetup(currentDir);
+    // Always ask essential questions:
+    // 1. Framework choice (Next.js vs Vite)
+    // 2. Polkadot library choice (papi vs dedot)
+    // --interactive flag only controls create-next-app and shadcn verbosity
+    this.logger.detail("💬 Running essential setup prompts");
+    this.logger.info("Setting up project with essential prompts...");
+    this.logger.detail("Framework choice and Polkadot library selection");
+    this.logger.detail(
+      "Use --interactive for detailed create-next-app/shadcn prompts"
+    );
+    return await this.runEssentialSetup(currentDir);
   }
 
   /**
-   * Get default configuration for --yes flag
+   * Run essential setup prompts (framework + polkadot library)
    */
-  private getDefaultConfig(projectName: string): ProjectSetupConfig {
-    return {
-      projectName,
-      framework: "nextjs",
-      useTypeScript: true,
-      useESLint: true,
-      useTailwind: true,
-      useSrcDirectory: false,
-      useAppRouter: true,
-      useTurbopack: false,
-      importAlias: "@/*",
-      polkadotLibrary: "papi",
-    };
-  }
-
-  /**
-   * Run interactive setup prompts
-   */
-  private async runInteractiveSetup(
+  private async runEssentialSetup(
     currentDir: string
   ): Promise<ProjectSetupConfig> {
+    this.logger.detail(
+      "💬 [DEBUG] runEssentialSetup() - Starting essential prompts for:" +
+        currentDir
+    );
+
+    this.logger.detail(
+      "❓ [DEBUG] Prompting user for essential configuration..."
+    );
     const answers = await inquirer.prompt([
       {
         type: "input",
@@ -137,88 +174,76 @@ export class InitCommand {
         ],
         default: "nextjs",
       },
-      {
-        type: "confirm",
-        name: "useSrcDirectory",
-        message: "Would you like your code inside a `src/` directory?",
-        default: false,
-        when: (answers: any) => answers.framework === "nextjs",
-      },
-      {
-        type: "confirm",
-        name: "useAppRouter",
-        message: "Would you like to use App Router? (recommended)",
-        default: true,
-        when: (answers: any) => answers.framework === "nextjs",
-      },
-      {
-        type: "confirm",
-        name: "useTurbopack",
-        message: "Would you like to use Turbopack for `next dev`?",
-        default: false,
-        when: (answers: any) => answers.framework === "nextjs",
-      },
-      {
-        type: "confirm",
-        name: "customizeImportAlias",
-        message:
-          "Would you like to customize the import alias (`@/*` by default)?",
-        default: false,
-        when: (answers: any) => answers.framework === "nextjs",
-      },
-      {
-        type: "input",
-        name: "importAlias",
-        message: "What import alias would you like configured?",
-        default: "@/*",
-        when: (answers: any) => answers.customizeImportAlias,
-        validate: (input: string) => {
-          if (!input.trim()) return "Import alias cannot be empty";
-          if (!input.includes("*")) return "Import alias must include *";
-          return true;
-        },
-      },
-      // Note: Polkadot library selection is now handled by PolkadotDetector.promptForLibrarySelection()
     ]);
 
+    this.logger.detail(
+      "📋 [DEBUG] User answers received:" + JSON.stringify(answers)
+    );
+
     // Handle Polkadot library selection using the shared utility
+    this.logger.detail(
+      "🔗 [DEBUG] Prompting for Polkadot library selection..."
+    );
     const polkadotDetector = new PolkadotDetector();
     const polkadotLibrary = await polkadotDetector.promptForLibrarySelection({
       skipPrompt: false, // Init command always prompts
       defaultLibrary: "papi",
     });
+    this.logger.detail(
+      "🔗 [DEBUG] Selected Polkadot library:" + polkadotLibrary
+    );
 
-    return {
+    const finalConfig = {
       projectName: answers.projectName,
       framework: answers.framework,
       useTypeScript: true, // Always enabled for better DX
       useESLint: true, // Always enabled for code quality
       useTailwind: true, // Always enabled for styling
-      useSrcDirectory: answers.useSrcDirectory || false,
-      useAppRouter: answers.useAppRouter || false,
-      useTurbopack: answers.useTurbopack || false,
-      importAlias: answers.importAlias || "@/*",
+      useSrcDirectory: false, // Default: no src directory
+      useAppRouter: true, // Default: use App Router (recommended)
+      useTurbopack: false, // Default: no Turbopack
+      importAlias: "@/*", // Default: standard alias
       polkadotLibrary: polkadotLibrary,
     };
+
+    this.logger.detail(
+      "📋 [DEBUG] Final essential config:" + JSON.stringify(finalConfig)
+    );
+    return finalConfig;
   }
 
   /**
    * Create a new project based on user configuration
    */
   private async createProject(config: ProjectSetupConfig): Promise<void> {
+    this.logger.detail(
+      "🏗️ [DEBUG] createProject() - Starting project creation"
+    );
+    this.logger.detail("📋 [DEBUG] Project config:" + JSON.stringify(config));
+
     const spinner = ora(`Creating ${config.framework} project...`).start();
 
     try {
       if (config.framework === "nextjs") {
+        this.logger.detail("⚛️ [DEBUG] Creating Next.js project...");
         await this.createNextJsProject(config);
+        this.logger.detail("⚛️ [DEBUG] Next.js project creation completed");
       } else {
+        this.logger.detail("⚡ [DEBUG] Creating Vite project...");
         await this.createViteProject(config);
+        this.logger.detail("⚡ [DEBUG] Vite project creation completed");
       }
 
       spinner.succeed(`${config.framework} project created successfully`);
-      logger.detail(`Project "${config.projectName}" initialized`);
+      this.logger.detail(`Project "${config.projectName}" initialized`);
+      this.logger.detail(
+        "✅ [DEBUG] createProject() - Project creation successful"
+      );
     } catch (error) {
       spinner.fail("Failed to create project");
+      this.logger.detail(
+        "❌ [DEBUG] createProject() - Project creation failed:" + error
+      );
       throw new Error(
         `Failed to create ${config.framework} project: ${
           error instanceof Error ? error.message : "Unknown error"
@@ -231,8 +256,20 @@ export class InitCommand {
    * Create Next.js project with optimized settings
    */
   private async createNextJsProject(config: ProjectSetupConfig): Promise<void> {
+    this.logger.detail(
+      "⚛️ [DEBUG] createNextJsProject() - Building Next.js arguments"
+    );
     const args = this.buildNextJsArgs(config);
+    this.logger.detail("📦 [DEBUG] Next.js CLI args:" + JSON.stringify(args));
+
+    this.logger.detail("🔧 [DEBUG] Getting package manager command");
     const { executable, baseArgs } = await this.getPackageManagerCommand();
+    this.logger.detail(
+      "📦 [DEBUG] Package manager:" + JSON.stringify({ executable, baseArgs })
+    );
+
+    const fullCommand = [executable, ...baseArgs, ...args];
+    this.logger.detail("🚀 [DEBUG] Executing command:" + fullCommand.join(" "));
 
     await execa(executable, [...baseArgs, ...args], {
       stdio: "pipe", // Hide verbose output but show errors
@@ -243,6 +280,10 @@ export class InitCommand {
         NEXT_TELEMETRY_DISABLED: "1",
       },
     });
+
+    this.logger.detail(
+      "✅ [DEBUG] createNextJsProject() - Next.js project created successfully"
+    );
   }
 
   /**
@@ -270,7 +311,8 @@ export class InitCommand {
     const { executable, baseArgs } = await this.getPackageManagerCommand();
 
     // Create Vite project
-    if (this.options.yes) {
+    if (!this.options.interactive) {
+      // Fast mode: use react-ts template directly
       await execa(
         executable,
         [...baseArgs, "create-vite@latest", ".", "--template", "react-ts"],
@@ -280,6 +322,7 @@ export class InitCommand {
         }
       );
     } else {
+      // Interactive mode: show prompts
       await execa(executable, [...baseArgs, "create-vite@latest", "."], {
         stdio: "inherit", // Show prompts for interactive mode
         timeout: 300000,
@@ -410,8 +453,8 @@ export default defineConfig({
 
       await fs.writeFile("tsconfig.json", JSON.stringify(tsconfig, null, 2));
     } catch (error) {
-      logger.warning("Failed to update tsconfig.json for import alias");
-      logger.detail("You may need to configure import paths manually");
+      this.logger.warning("Failed to update tsconfig.json for import alias");
+      this.logger.detail("You may need to configure import paths manually");
     }
   }
 
@@ -425,8 +468,8 @@ export default defineConfig({
     try {
       await fs.writeFile(cssFile, tailwindCSS);
     } catch (error) {
-      logger.warning("Failed to update CSS file for Tailwind CSS");
-      logger.detail("You may need to add Tailwind imports manually");
+      this.logger.warning("Failed to update CSS file for Tailwind CSS");
+      this.logger.detail("You may need to add Tailwind imports manually");
     }
   }
 
@@ -434,27 +477,61 @@ export default defineConfig({
    * Initialize shadcn/ui in the project
    */
   private async initializeShadcn(config: ProjectSetupConfig): Promise<void> {
+    this.logger.detail(
+      "🎨 [DEBUG] initializeShadcn() - Starting shadcn/ui initialization"
+    );
+    this.logger.detail(
+      "⚙️ [DEBUG] Config for shadcn:" +
+        JSON.stringify({
+          useSrcDirectory: config.useSrcDirectory,
+          interactive: this.options.interactive,
+        })
+    );
+
     const spinner = ora("Initializing shadcn/ui...").start();
 
     try {
+      this.logger.detail(
+        "🔧 [DEBUG] Getting package manager command for shadcn..."
+      );
       const { executable, baseArgs } = await this.getPackageManagerCommand();
       const shadcnVersion = "shadcn@canary"; // Use canary for Tailwind v4 support
+      this.logger.detail("📦 [DEBUG] Using shadcn version:" + shadcnVersion);
+
+      this.logger.detail("🔧 [DEBUG] Building shadcn arguments...");
       const shadcnArgs = this.buildShadcnArgs(config, shadcnVersion);
+      this.logger.detail(
+        "📦 [DEBUG] Shadcn CLI args:" + JSON.stringify(shadcnArgs)
+      );
+
+      const fullCommand = [executable, ...baseArgs, ...shadcnArgs];
+      this.logger.detail(
+        "🚀 [DEBUG] Executing shadcn command:" + fullCommand.join(" ")
+      );
 
       await execa(executable, [...baseArgs, ...shadcnArgs], {
-        stdio: this.options.yes ? "pipe" : "inherit",
+        stdio: this.options.interactive ? "inherit" : "pipe",
         timeout: 120000, // 2 minutes timeout
       });
 
       spinner.succeed("shadcn/ui initialized successfully");
-      logger.detail("UI components system ready");
+      this.logger.detail("UI components system ready");
+      this.logger.detail(
+        "✅ [DEBUG] initializeShadcn() - shadcn/ui initialization successful"
+      );
     } catch (error) {
       spinner.fail("Failed to initialize shadcn/ui");
-      logger.warning("You may need to run 'npx shadcn@canary init' manually");
-      logger.detail("This is required before adding components");
+      this.logger.detail(
+        "❌ [DEBUG] initializeShadcn() - shadcn/ui initialization failed:" +
+          error
+      );
+      this.logger.warning(
+        "You may need to run 'npx shadcn@canary init' manually"
+      );
+      this.logger.detail("This is required before adding components");
 
       // Don't throw error - this shouldn't stop the entire initialization
-      logger.info(
+      this.logger.info(
         "Project created successfully despite shadcn/ui initialization issue"
       );
     }
@@ -469,7 +546,8 @@ export default defineConfig({
   ): string[] {
     const args = [shadcnVersion, "init"];
 
-    if (this.options.yes) {
+    if (!this.options.interactive) {
+      // Fast mode: use defaults
       args.push("--yes", "--base-color", "neutral", "--css-variables");
 
       if (config.useSrcDirectory) {
@@ -488,26 +566,56 @@ export default defineConfig({
   private async installPolkadotLibrary(
     config: ProjectSetupConfig
   ): Promise<void> {
+    this.logger.detail(
+      "🔗 [DEBUG] installPolkadotLibrary() - Starting Polkadot library installation"
+    );
     const libraryName =
       config.polkadotLibrary === "papi" ? "polkadot-api" : "dedot";
+    this.logger.detail(
+      "📦 [DEBUG] Installing library:" +
+        libraryName +
+        "for" +
+        config.polkadotLibrary
+    );
+
     const spinner = ora(`Installing ${libraryName}...`).start();
 
     try {
+      this.logger.detail("🔧 [DEBUG] Detecting package manager...");
       const packageManager = await this.projectDetector.detectPackageManager();
       const installCommand = packageManager === "npm" ? "install" : "add";
+      this.logger.detail(
+        "📦 [DEBUG] Package manager:" +
+          packageManager +
+          "install command:" +
+          installCommand
+      );
 
       if (config.polkadotLibrary === "papi") {
+        this.logger.detail("🔗 [DEBUG] Installing PAPI library...");
         await this.installPapiLibrary(packageManager, installCommand);
         spinner.succeed("polkadot-api installed");
+        this.logger.detail("✅ [DEBUG] PAPI installation completed");
       } else {
+        this.logger.detail("🔗 [DEBUG] Installing Dedot library...");
         await this.installDedotLibrary(packageManager, installCommand);
         spinner.succeed("dedot and @dedot/chaintypes installed");
+        this.logger.detail("🔍 [DEBUG] Verifying Dedot installation...");
         await this.verifyDedotInstallation();
+        this.logger.detail(
+          "✅ [DEBUG] Dedot installation and verification completed"
+        );
       }
 
-      logger.detail(`${libraryName} ready for blockchain development`);
+      this.logger.detail(`${libraryName} ready for blockchain development`);
+      this.logger.detail(
+        "✅ [DEBUG] installPolkadotLibrary() - Installation successful"
+      );
     } catch (error) {
       spinner.fail(`Failed to install ${libraryName}`);
+      this.logger.detail(
+        "❌ [DEBUG] installPolkadotLibrary() - Installation failed:" + error
+      );
       throw new Error(
         `Failed to install ${libraryName}: ${
           error instanceof Error ? error.message : "Unknown error"
@@ -582,28 +690,35 @@ export default defineConfig({
    * Show success message with next steps
    */
   private showSuccessMessage(config: ProjectSetupConfig): void {
-    logger.success("Project initialized successfully!");
-    logger.newline();
+    this.logger.success("Project initialized successfully!");
+    this.logger.newline();
 
-    logger.subsection("What's been set up:");
-    logger.detail(`• ${config.framework} project with TypeScript`, true);
-    logger.detail(
+    this.logger.subsection("What's been set up:");
+    this.logger.detail(`• ${config.framework} project with TypeScript`, true);
+    this.logger.detail(
       `• ${config.polkadotLibrary === "papi" ? "polkadot-api" : "dedot"} for blockchain integration`,
       true
     );
-    logger.detail("• shadcn/ui for beautiful components", true);
-    logger.detail("• Tailwind CSS for styling", true);
-    logger.newline();
+    this.logger.detail("• shadcn/ui for beautiful components", true);
+    this.logger.detail("• Tailwind CSS for styling", true);
+    this.logger.newline();
 
-    logger.subsection("Next steps:");
-    logger.detail("1. Start development server:", true);
-    logger.code(
-      `${config.framework === "nextjs" ? "npm run dev" : "npm run dev"}`
-    );
-    logger.detail("2. Add Polkadot UI components:", true);
-    logger.code("polka-ui add block-number");
-    logger.detail("3. Check out the documentation:", true);
-    logger.code("https://dot-ui.com/docs");
+    // Only show next steps when running standalone init, not when called from add command
+    if (this.context === "standalone") {
+      this.logger.subsection("Next steps:");
+      this.logger.detail("1. Start development server:", true);
+      this.logger.code(
+        `${config.framework === "nextjs" ? "npm run dev" : "npm run dev"}`
+      );
+      this.logger.detail("2. Add Polkadot UI components:", true);
+      this.logger.code("polka-ui add block-number");
+      this.logger.detail("3. Check out the documentation:", true);
+      this.logger.code("https://dot-ui.com/docs");
+    } else {
+      this.logger.detail(
+        "🔄 [DEBUG] Skipping next steps - called from add command"
+      );
+    }
   }
 
   /**
@@ -614,19 +729,34 @@ export default defineConfig({
     setupConfig?: ProjectSetupConfig,
     startTime?: number
   ): Promise<void> {
+    this.logger.detail(
+      "💥 [DEBUG] handleInitializationError() - Handling initialization error"
+    );
+    this.logger.detail("❌ [DEBUG] Error details:" + error);
+    this.logger.detail("📋 [DEBUG] Setup config at error:" + setupConfig);
+    this.logger.detail(
+      "⏱️ [DEBUG] Time elapsed:" +
+        (startTime ? Date.now() - startTime : "unknown") +
+        "ms"
+    );
+
     const errorMessage =
       error instanceof Error ? error.message : "An unexpected error occurred";
+
+    this.logger.detail("📄 [DEBUG] Processed error message:" + errorMessage);
 
     // Note: Init error tracking not implemented yet
     // Could be added to telemetry interface in the future
 
-    logger.error("Project initialization failed");
-    logger.error(errorMessage);
-    logger.newline();
+    this.logger.error("Project initialization failed");
+    this.logger.error(errorMessage);
+    this.logger.newline();
 
     // Provide recovery suggestions based on error type
+    this.logger.detail("💡 [DEBUG] Showing recovery suggestions...");
     this.showRecoverySuggestions(error, setupConfig);
 
+    this.logger.detail("🚪 [DEBUG] Exiting process with code 1");
     process.exit(1);
   }
 
@@ -643,36 +773,39 @@ export default defineConfig({
       errorMessage.includes("timeout") ||
       errorMessage.includes("ETIMEDOUT")
     ) {
-      logger.subsection("Network timeout detected:");
-      logger.detail("• Check your internet connection", true);
-      logger.detail("• Try again with a stable network", true);
-      logger.detail("• Consider using a different package manager", true);
+      this.logger.subsection("Network timeout detected:");
+      this.logger.detail("• Check your internet connection", true);
+      this.logger.detail("• Try again with a stable network", true);
+      this.logger.detail("• Consider using a different package manager", true);
     } else if (
       errorMessage.includes("permission") ||
       errorMessage.includes("EACCES")
     ) {
-      logger.subsection("Permission error detected:");
-      logger.detail(
+      this.logger.subsection("Permission error detected:");
+      this.logger.detail(
         "• Ensure you have write permissions in this directory",
         true
       );
-      logger.detail("• Try running with appropriate permissions", true);
-      logger.detail("• Check if the directory is writable", true);
+      this.logger.detail("• Try running with appropriate permissions", true);
+      this.logger.detail("• Check if the directory is writable", true);
     } else if (
       errorMessage.includes("space") ||
       errorMessage.includes("ENOSPC")
     ) {
-      logger.subsection("Disk space error detected:");
-      logger.detail("• Free up disk space", true);
-      logger.detail("• Try creating the project in a different location", true);
+      this.logger.subsection("Disk space error detected:");
+      this.logger.detail("• Free up disk space", true);
+      this.logger.detail(
+        "• Try creating the project in a different location",
+        true
+      );
     } else {
-      logger.subsection("Recovery suggestions:");
-      logger.detail("• Ensure you have Node.js 16+ installed", true);
-      logger.detail("• Try clearing package manager cache", true);
+      this.logger.subsection("Recovery suggestions:");
+      this.logger.detail("• Ensure you have Node.js 16+ installed", true);
+      this.logger.detail("• Try clearing package manager cache", true);
       if (setupConfig?.framework === "nextjs") {
-        logger.detail("• Try: npx create-next-app@latest manually", true);
+        this.logger.detail("• Try: npx create-next-app@latest manually", true);
       } else {
-        logger.detail("• Try: npm create vite@latest manually", true);
+        this.logger.detail("• Try: npm create vite@latest manually", true);
       }
     }
   }

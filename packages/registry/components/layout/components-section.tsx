@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 
 import { BlockNumber } from "@/registry/dot-ui/blocks/block-number/components/block-number.papi";
-import { AddressInput } from "@/registry/dot-ui/blocks/address-input/components/address-input.papi";
+import { AddressInputWithProvider } from "@/registry/dot-ui/blocks/address-input/components/address-input.papi";
 
 const examples = [
   {
@@ -19,7 +19,9 @@ const examples = [
     code: "address-input",
     description:
       "Input component with SS58/Ethereum validation and identity lookup",
-    component: <AddressInput className="w-full" truncate={8} />,
+    component: (
+      <AddressInputWithProvider className="w-full" truncate={8} format="both" />
+    ),
   },
   {
     name: "Block Number DEMO",
@@ -67,7 +69,7 @@ const examples = [
 //   },
 // ];
 
-export function ExamplesSection() {
+export function ComponentsSection() {
   return (
     <section className="container space-y-6 py-8 md:py-8 lg:py-12">
       {/* Examples grid */}

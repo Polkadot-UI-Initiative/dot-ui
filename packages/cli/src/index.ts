@@ -22,7 +22,10 @@ program
   .option("--dev", "Use development registry (localhost:3000)")
   .option("--verbose", "Show detailed output")
   .option("--force", "Force installation even if files exist")
-  .option("--yes", "Skip all prompts and use default values");
+  .option(
+    "--interactive",
+    "Show detailed prompts for create-next-app and shadcn configuration"
+  );
 
 // Add command
 program
@@ -34,7 +37,7 @@ program
       dev: program.opts().dev,
       verbose: program.opts().verbose,
       force: program.opts().force,
-      yes: program.opts().yes,
+      interactive: program.opts().interactive,
     };
 
     const addCommand = new AddCommand(options);
@@ -55,7 +58,7 @@ program
       dev: program.opts().dev,
       verbose: program.opts().verbose,
       force: program.opts().force,
-      yes: program.opts().yes,
+      interactive: program.opts().interactive,
     };
 
     const initCommand = new InitCommand(options);
@@ -76,7 +79,7 @@ program
       dev: program.opts().dev,
       verbose: program.opts().verbose,
       force: program.opts().force,
-      yes: program.opts().yes,
+      interactive: program.opts().interactive,
     };
 
     const listCommand = new ListCommand(options);
