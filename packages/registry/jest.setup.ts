@@ -6,7 +6,8 @@ import "@testing-library/jest-dom";
 // Add missing Node.js globals for Polkadot libraries
 import { TextEncoder, TextDecoder } from "util";
 global.TextEncoder = TextEncoder;
-global.TextDecoder = TextDecoder;
+(global as typeof globalThis).TextDecoder =
+  TextDecoder as typeof globalThis.TextDecoder;
 
 // Mock Web APIs
 Object.defineProperty(window, "matchMedia", {
@@ -52,9 +53,9 @@ global.cancelAnimationFrame = jest.fn((id) => clearTimeout(id));
 
 // Mock CSS.supports
 if (typeof CSS === "undefined") {
-  global.CSS = {
+  (global as typeof globalThis).CSS = {
     supports: jest.fn(() => true),
-  };
+  } as unknown as typeof CSS;
 }
 
 // Suppress console errors during tests (optional)
