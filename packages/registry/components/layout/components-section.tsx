@@ -11,6 +11,9 @@ import {
 
 import { BlockNumber } from "@/registry/dot-ui/blocks/block-number/components/block-number.papi";
 import { AddressInputWithProvider } from "@/registry/dot-ui/blocks/address-input/components/address-input.papi";
+import { OpenInV0Button } from "../open-in-v0-button";
+import { Button } from "@/components/ui/button";
+import { BookText } from "lucide-react";
 
 const examples = [
   {
@@ -75,7 +78,10 @@ export function ComponentsSection() {
       {/* Examples grid */}
       <div className="mx-auto grid justify-center gap-4 sm:grid-cols-2 md:max-w-[64rem] md:grid-cols-3">
         {examples.map((example) => (
-          <Card key={example.name} className="relative overflow-hidden">
+          <Card
+            key={example.name}
+            className="relative overflow-hidden flex flex-col justify-between"
+          >
             <CardHeader>
               <CardTitle className="text-lg">{example.name}</CardTitle>
               <CardDescription>{example.description}</CardDescription>
@@ -83,16 +89,20 @@ export function ComponentsSection() {
             <CardContent className="flex items-center justify-center">
               {example.component}
             </CardContent>
-            <CardFooter className="flex items-center justify-between pt-0">
-              <div className="text-xs text-muted-foreground font-mono">
-                {example.code}
-              </div>
+            <CardFooter className="flex items-center justify-between pt-2">
               <Link
                 href={example.href}
                 className="text-xs text-primary hover:underline"
               >
-                View →
+                <Button size="sm" className="text-xs">
+                  <BookText /> Docs →
+                </Button>
               </Link>
+              <OpenInV0Button
+                name={example.code}
+                title={example.name}
+                prompt={example.description}
+              />
             </CardFooter>
           </Card>
         ))}

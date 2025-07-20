@@ -24,19 +24,19 @@ export interface IdentitySearchResult {
 export function useIdentityByDisplayName(
   displayName: string | null | undefined
 ) {
-  const { api, isLoading, currentChain, isConnected } = usePapi();
-  const peopleApi = usePolkadotApi("paseo_people");
+  const IDENTITY_CHAIN = "paseo_people";
+  const { isLoading, isConnected } = usePapi();
+  const peopleApi = usePolkadotApi(IDENTITY_CHAIN);
 
   return useQuery({
-    queryKey: ["identity-search", displayName, currentChain],
+    queryKey: ["identity-search", displayName, IDENTITY_CHAIN],
     queryFn: async (): Promise<IdentitySearchResult[]> => {
       if (
-        !api ||
         !peopleApi ||
         !displayName ||
         displayName.length < 3 ||
-        isLoading(currentChain) ||
-        !isConnected(currentChain)
+        isLoading(IDENTITY_CHAIN) ||
+        !isConnected(IDENTITY_CHAIN)
       ) {
         return [];
       }
@@ -79,11 +79,10 @@ export function useIdentityByDisplayName(
       }
     },
     enabled:
-      !!api &&
       !!peopleApi &&
       !!displayName &&
       displayName.length > 0 &&
-      isConnected(currentChain),
+      isConnected(IDENTITY_CHAIN),
     staleTime: 5 * 60 * 1000, // 5 minutes - identities don't change often
     gcTime: 10 * 60 * 1000, // 10 minutes - keep cached longer for search
   });

@@ -14,17 +14,18 @@ export interface PolkadotIdentity {
 }
 
 export function usePolkadotIdentity(address: string) {
-  const { api, isLoading, currentChain, isConnected } = usePapi();
-  const peopleApi = usePolkadotApi("paseo_people");
+  const IDENTITY_CHAIN = "paseo_people";
+  const { isLoading, isConnected } = usePapi();
+  const peopleApi = usePolkadotApi(IDENTITY_CHAIN);
 
   return useQuery({
-    queryKey: ["polkadot-identity", address, currentChain],
+    queryKey: ["polkadot-identity", address, IDENTITY_CHAIN],
     queryFn: async (): Promise<PolkadotIdentity | null> => {
       if (
-        !api ||
+        !peopleApi ||
         !address ||
-        isLoading(currentChain) ||
-        !isConnected(currentChain)
+        isLoading(IDENTITY_CHAIN) ||
+        !isConnected(IDENTITY_CHAIN)
       ) {
         return null;
       }
@@ -49,7 +50,10 @@ export function usePolkadotIdentity(address: string) {
       }
     },
     enabled:
-      !!api && !!address && address.length > 0 && isConnected(currentChain),
+      !!peopleApi &&
+      !!address &&
+      address.length > 0 &&
+      isConnected(IDENTITY_CHAIN),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }
