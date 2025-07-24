@@ -186,8 +186,7 @@ export const AddressInput = forwardRef<HTMLInputElement, AddressInputProps>(
       if (
         !validationResult?.isValid &&
         debouncedSearch.length > 2 &&
-        identitySearch.data &&
-        identitySearch.data.length > 0
+        identitySearch.data !== undefined
       ) {
         setShowDropdown(true);
       }
@@ -279,12 +278,12 @@ export const AddressInput = forwardRef<HTMLInputElement, AddressInputProps>(
       }
     };
 
-    // Show dropdown when search is active or results are available
+    // Show dropdown when search is active or results are available (including empty results)
     useEffect(() => {
       if (
         !validationResult?.isValid &&
         debouncedSearch.length > 2 &&
-        (isIdentitySearching || (identitySearch.data && identitySearch.data.length > 0))
+        (isIdentitySearching || identitySearch.data !== undefined)
       ) {
         setShowDropdown(true);
         setHighlightedIndex(-1);
@@ -415,9 +414,8 @@ export const AddressInput = forwardRef<HTMLInputElement, AddressInputProps>(
                   !identitySearch.error &&
                   identitySearch.data &&
                   identitySearch.data.length === 0 && (
-                    <div className="p-3 text-sm text-muted-foreground">
-                      No identities found matching &ldquo;{debouncedSearch}
-                      &rdquo;
+                    <div className="px-3 py-2 text-sm text-muted-foreground cursor-default">
+                      No identity found
                     </div>
                   )}
               </div>

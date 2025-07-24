@@ -60,21 +60,25 @@ export function useIdentityByDisplayName(
           ) {
             const hasPositiveJudgement = hasPositiveIdentityJudgement(value.judgements);
 
-            matches.push({
-              address: keyArgs[0] as string,
-              identity: {
-                display,
-                email: extractText(value.info?.email?.value),
-                legal: extractText(value.info?.legal?.value),
-                matrix: extractText(value.info?.matrix?.value),
-                twitter: extractText(value.info?.twitter?.value),
-                web: extractText(value.info?.web?.value),
-                verified: hasPositiveJudgement || false,
-              },
-            });
+            // Only include verified identities in search results
+            // Remove this if block if we want to show all identities
+            if (hasPositiveJudgement) {
+              matches.push({
+                address: keyArgs[0] as string,
+                identity: {
+                  display,
+                  email: extractText(value.info?.email?.value),
+                  legal: extractText(value.info?.legal?.value),
+                  matrix: extractText(value.info?.matrix?.value),
+                  twitter: extractText(value.info?.twitter?.value),
+                  web: extractText(value.info?.web?.value),
+                  verified: true,
+                },
+              });
 
-            if (matches.length >= MAX_RESULTS) {
-              break;
+              if (matches.length >= MAX_RESULTS) {
+                break;
+              }
             }
           }
         }
