@@ -7,7 +7,7 @@ import {
   extractText,
   hasPositiveIdentityJudgement,
 } from "@/registry/dot-ui/lib/utils.dot-ui";
-import { ChainIdWithIdentity } from "@/registry/dot-ui/lib/types.papi";
+import { ChainId } from "@/registry/dot-ui/lib/config.dot-ui";
 
 export interface PolkadotIdentity {
   display?: string;
@@ -19,7 +19,7 @@ export interface PolkadotIdentity {
 
 export function usePolkadotIdentity(
   address: string,
-  identityChain: ChainIdWithIdentity = "paseo_people"
+  identityChain: ChainId = "paseo_people"
 ) {
   const { isLoading, isConnected } = usePapi();
   const peopleApi = usePolkadotApi(identityChain);

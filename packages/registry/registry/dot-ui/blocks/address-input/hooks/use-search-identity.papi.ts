@@ -9,7 +9,7 @@ import {
   extractText,
   hasPositiveIdentityJudgement,
 } from "@/registry/dot-ui/lib/utils.dot-ui";
-import { ChainIdWithIdentity } from "@/registry/dot-ui/lib/types.papi";
+import { ChainId } from "@/registry/dot-ui/lib/config.dot-ui";
 
 export interface FormattedIdentity {
   display?: string;
@@ -28,7 +28,7 @@ export interface IdentitySearchResult {
 
 export function useIdentityByDisplayName(
   displayName: string | null | undefined,
-  identityChain: ChainIdWithIdentity = "paseo_people"
+  identityChain: ChainId = "paseo_people"
 ) {
   const { isLoading, isConnected } = usePapi();
   const peopleApi = usePolkadotApi(identityChain);

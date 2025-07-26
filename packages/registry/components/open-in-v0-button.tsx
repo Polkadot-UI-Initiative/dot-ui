@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { supportedLibraries } from "@/registry/dot-ui/lib/types.dot-ui";
 
 export function OpenInV0Button({
   name,
@@ -6,10 +7,12 @@ export function OpenInV0Button({
   prompt,
   variant = "default",
   className,
+  library,
 }: {
   name: string;
   title?: string;
   prompt?: string;
+  library?: supportedLibraries;
 } & React.ComponentProps<typeof Button>) {
   return (
     <Button
@@ -20,7 +23,7 @@ export function OpenInV0Button({
       asChild
     >
       <a
-        href={`https://v0.dev/chat/api/open?url=${process.env.NEXT_PUBLIC_BASE_URL}/r/${name}.json&title=${encodeURIComponent(title ?? name)}&prompt=${encodeURIComponent(prompt ?? "Explain this code")}`}
+        href={`https://v0.dev/chat/api/open?url=https://${process.env.VERCEL_BRANCH_URL}/r/${library ?? supportedLibraries.Papi}/${name}.json&title=${encodeURIComponent(title ?? name)}&prompt=${encodeURIComponent(prompt ?? "Explain this code")}`}
         target="_blank"
         rel="noreferrer"
       >

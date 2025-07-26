@@ -40,10 +40,6 @@
         {
           "path": "registry/dot-ui/lib/config.dot-ui.ts",
           "type": "registry:lib"
-        },
-        {
-          "path": "registry/dot-ui/lib/config.papi.ts",
-          "type": "registry:lib"
         }
       ]
     },
@@ -94,16 +90,53 @@
           "type": "registry:lib"
         },
         {
-          "path": "registry/dot-ui/lib/types.papi.ts",
-          "type": "registry:lib"
-        },
-        {
           "path": "registry/dot-ui/lib/config.dot-ui.ts",
           "type": "registry:lib"
         },
         {
-          "path": "registry/dot-ui/lib/config.papi.ts",
-          "type": "registry:lib"
+          "path": ".papi/descriptors/dist/index.d.ts",
+          "type": "registry:file",
+          "target": ".papi/descriptors/dist/index.d.ts"
+        },
+        {
+          "path": ".papi/descriptors/dist/paseo.d.ts",
+          "type": "registry:file",
+          "target": ".papi/descriptors/dist/paseo.d.ts"
+        },
+        {
+          "path": ".papi/descriptors/dist/paseo_metadata.d.ts",
+          "type": "registry:file",
+          "target": ".papi/descriptors/dist/paseo_metadata.d.ts"
+        },
+        {
+          "path": ".papi/descriptors/dist/paseo_people.d.ts",
+          "type": "registry:file",
+          "target": ".papi/descriptors/dist/paseo_people.d.ts"
+        },
+        {
+          "path": ".papi/descriptors/dist/paseo_people_metadata.d.ts",
+          "type": "registry:file",
+          "target": ".papi/descriptors/dist/paseo_people_metadata.d.ts"
+        },
+        {
+          "path": ".papi/descriptors/dist/common.d.ts",
+          "type": "registry:file",
+          "target": ".papi/descriptors/dist/common.d.ts"
+        },
+        {
+          "path": ".papi/descriptors/dist/common-types.d.ts",
+          "type": "registry:file",
+          "target": ".papi/descriptors/dist/common-types.d.ts"
+        },
+        {
+          "path": ".papi/descriptors/dist/descriptors.d.ts",
+          "type": "registry:file",
+          "target": ".papi/descriptors/dist/descriptors.d.ts"
+        },
+        {
+          "path": ".papi/descriptors/dist/metadataTypes.d.ts",
+          "type": "registry:file",
+          "target": ".papi/descriptors/dist/metadataTypes.d.ts"
         }
       ]
     }
