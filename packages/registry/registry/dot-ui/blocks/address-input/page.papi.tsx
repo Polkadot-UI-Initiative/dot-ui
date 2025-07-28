@@ -1,154 +1,149 @@
 "use client";
 
-import { polkadotConfig } from "@/registry/dot-ui/lib/config.papi";
+import { dotUiConfig } from "@/registry/dot-ui/lib/config.dot-ui";
 import { PolkadotProvider } from "@/registry/dot-ui/providers/papi-provider";
 import { AddressInput } from "@/registry/dot-ui/blocks/address-input/components/address-input.papi";
 import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Button } from "@/registry/dot-ui/ui/button";
 
 const queryClient = new QueryClient();
 
+// Sample addresses for testing
+const sampleAddresses = {
+  ss58: "15oF4uVJwmo4TdGW7VfQxNLavjCXviqxT9S1MgbjMNHr6Sp5",
+  ethereum: "0x8fedD9acDe24AD1BF21B9B3370Aff6Bddae65dC3",
+};
+
 export default function AddressInputPage() {
   const [address, setAddress] = useState("");
-  const [identityResult, setIdentityResult] = useState<{
-    type: string;
-    data: Record<string, unknown>;
-  } | null>(null);
+
+  const handleTryAddress = (sampleAddress: string) => {
+    setAddress(sampleAddress);
+  };
 
   return (
     <QueryClientProvider client={queryClient}>
-      <PolkadotProvider defaultChain={polkadotConfig.defaultChain}>
-        <div className="space-y-6 p-6">
-          <div>
-            <h1 className="text-2xl font-bold">AddressInput Component</h1>
-            <p className="text-muted-foreground">
-              Input component with SS58/Ethereum validation and identity lookup
-            </p>
-          </div>
+      <PolkadotProvider defaultChain={dotUiConfig.defaultChain}>
+        <div className="min-h-screen bg-white">
+          <div className="max-w-2xl mx-auto px-6 py-12">
+            {/* Header */}
+            <div className="text-center mb-12">
+              <h1 className="text-3xl font-bold text-gray-900 mb-4">
+                Address Input
+              </h1>
+              <p className="text-gray-600 text-lg">
+                Enter a Polkadot SS58 address or Ethereum address to validate
+                and lookup identity information
+              </p>
+            </div>
 
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold">Examples</h2>
+            {/* Main Address Input */}
+            <div className="mb-12">
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                Address
+              </label>
+              <AddressInput
+                placeholder="Enter SS58 or Ethereum address..."
+                value={address}
+                onChange={setAddress}
+                format="both"
+                className="w-full"
+                truncate={8}
+              />
+            </div>
 
-            <div className="grid lg:grid-cols-2 xl:grid-cols-3 gap-4">
-              {/* Basic Example */}
-              <div className="space-y-2">
-                <h3 className="font-medium">Basic Address Input</h3>
-                <AddressInput
-                  label="Enter Address"
-                  placeholder="Enter Polkadot or Ethereum address..."
-                  value={address}
-                  onChange={setAddress}
-                  format="both"
-                  onIdentityFound={setIdentityResult}
-                />
-                {identityResult && (
-                  <pre className="text-sm bg-muted p-2 rounded">
-                    {JSON.stringify(identityResult, null, 2)}
-                  </pre>
-                )}
-              </div>
+            {/* Sample Addresses */}
+            <div className="mb-12">
+              <h2 className="text-xl font-bold text-gray-900 mb-3">
+                Sample Addresses
+              </h2>
+              <p className="text-gray-600 mb-6">
+                Try these sample addresses to test the validation
+              </p>
 
-              {/* Polkadot Only Example */}
-              <div className="space-y-2">
-                <h3 className="font-medium">Polkadot Address Only</h3>
-                <AddressInput
-                  label="Polkadot Address"
-                  placeholder="Enter Polkadot address..."
-                  format="ss58"
-                  withIdentityLookup={true}
-                />
-              </div>
+              <div className="space-y-4">
+                {/* SS58 Address */}
+                <div>
+                  <h3 className="font-medium text-gray-900 mb-2">
+                    SS58 Address (Polkadot)
+                  </h3>
+                  <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
+                    <code className="flex-1 text-sm font-mono text-gray-700">
+                      {sampleAddresses.ss58}
+                    </code>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleTryAddress(sampleAddresses.ss58)}
+                    >
+                      Try
+                    </Button>
+                  </div>
+                </div>
 
-              {/* Ethereum Only Example */}
-              <div className="space-y-2">
-                <h3 className="font-medium">Ethereum Address Only</h3>
-                <AddressInput
-                  label="Ethereum Address"
-                  placeholder="Enter Ethereum address..."
-                  format="eth"
-                  // withEnsLookup={true}
-                  // ethProviderUrl="https://eth-mainnet.alchemyapi.io/v2/demo"
-                />
-              </div>
-
-              {/* Truncated Example */}
-              <div className="space-y-2">
-                <h3 className="font-medium">Truncated Display</h3>
-                <AddressInput
-                  label="Truncated Address"
-                  placeholder="Enter address..."
-                  format="both"
-                  truncate={6}
-                />
-              </div>
-
-              {/* Without Identicon */}
-              <div className="space-y-2">
-                <h3 className="font-medium">Without Identicon</h3>
-                <AddressInput
-                  label="Address (No Icon)"
-                  placeholder="Enter address..."
-                  format="both"
-                  showIdenticon={false}
-                />
-              </div>
-
-              {/* Disabled Example */}
-              <div className="space-y-2">
-                <h3 className="font-medium">Disabled State</h3>
-                <AddressInput
-                  label="Disabled Input"
-                  placeholder="This is disabled..."
-                  value="5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY"
-                  disabled
-                />
+                {/* Ethereum Address */}
+                <div>
+                  <h3 className="font-medium text-gray-900 mb-2">
+                    Ethereum Address
+                  </h3>
+                  <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
+                    <code className="flex-1 text-sm font-mono text-gray-700">
+                      {sampleAddresses.ethereum}
+                    </code>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleTryAddress(sampleAddresses.ethereum)}
+                    >
+                      Try
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold">Component Features</h2>
-            <ul className="list-disc pl-6 space-y-1 text-sm">
-              <li>
-                Real-time address validation for SS58 (Polkadot) and Ethereum
-                formats
-              </li>
-              <li>Identity lookup for Polkadot addresses using PAPI</li>
-              <li>
-                Visual feedback with validation states (green/red borders)
-              </li>
-              <li>Loading indicators during API calls</li>
-              <li>Optional identicon display</li>
-              <li>Address truncation for better UI</li>
-              <li>Connection status awareness</li>
-              <li>TypeScript support with full type safety</li>
-            </ul>
-          </div>
-
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold">Usage</h2>
-            <div className="bg-muted p-4 rounded-lg">
-              <pre className="text-sm overflow-x-auto">
-                {`import { AddressInput } from "@/registry/dot-ui/blocks/address-input/components/address-input.papi";
-
-// Basic usage
-<AddressInput
-  label="Recipient Address"
-  placeholder="Enter address..."
-  value={address}
-  onChange={setAddress}
-  format="ss58"
-  withIdentityLookup={true}
-/>
-
-// With identity callback
-<AddressInput
-  format="both"
-  onIdentityFound={(identity) => {
-    console.log("Identity found:", identity);
-  }}
-/>`}
-              </pre>
+            {/* Features */}
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 mb-6">Features</h2>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                  <span className="text-gray-700">
+                    Real-time address validation for SS58 and Ethereum formats
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                  <span className="text-gray-700">
+                    Identity lookup for Polkadot addresses using polkadot-api
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 rounded-full bg-purple-500"></div>
+                  <span className="text-gray-700">
+                    Visual feedback with validation icons and badges
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 rounded-full bg-orange-500"></div>
+                  <span className="text-gray-700">
+                    Responsive design with loading states
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                  <span className="text-gray-700">
+                    TypeScript support with full type safety
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 rounded-full bg-teal-500"></div>
+                  <span className="text-gray-700">
+                    Optional identicon display and address truncation
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>

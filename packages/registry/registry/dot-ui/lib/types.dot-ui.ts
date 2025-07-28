@@ -38,3 +38,8 @@ export enum JsonRpcApi {
   LEGACY = "legacy",
   NEW = "new",
 }
+
+export enum supportedLibraries {
+  Papi = "papi",
+  Dedot = "dedot",
+}
