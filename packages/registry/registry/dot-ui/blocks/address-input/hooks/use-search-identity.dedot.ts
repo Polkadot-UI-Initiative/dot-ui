@@ -5,6 +5,8 @@ import { useDedot } from "@/registry/dot-ui/providers/dedot-provider";
 import { hasPositiveIdentityJudgement } from "@/registry/dot-ui/lib/utils.dot-ui";
 import { type IdentitySearchResult } from "@/registry/dot-ui/lib/types.dot-ui";
 import { type ChainId } from "@/registry/dot-ui/lib/config.dot-ui";
+import { PalletIdentityRegistration } from "@dedot/chaintypes/substrate";
+import { AccountId32 } from "dedot/codecs";
 
 export function useIdentitySearch(
   displayName: string | null | undefined,
@@ -28,7 +30,10 @@ export function useIdentitySearch(
 
       try {
         // Get all identity entries using Dedot API
-        const entries = await api.query.identity.identityOf.entries();
+        const storageQuery = api.query.identity.identityOf as unknown as {
+          entries(): Promise<[AccountId32, PalletIdentityRegistration][]>;
+        };
+        const entries = await storageQuery.entries();
 
         const MAX_RESULTS = 10;
         const matches: IdentitySearchResult[] = [];

@@ -7,7 +7,8 @@ import {
   useState,
   useCallback,
 } from "react";
-import { type ChainId, dotUiConfig } from "@/registry/dot-ui/lib/config.dot-ui";
+import { type ChainId } from "@/registry/dot-ui/lib/config.dot-ui";
+import { dotUiConfig } from "@/registry/dot-ui/lib/config.dot-ui";
 import {
   getChainIds,
   getChainConfig,
@@ -18,11 +19,16 @@ import {
   type BasePolkadotContextValue,
   type BasePolkadotProviderProps,
 } from "@/registry/dot-ui/lib/types.dot-ui";
+import {
+  type ConfiguredChainApi,
+  type CompositeApi,
+  type AnyChainApi,
+} from "@/registry/dot-ui/lib/types.dedot";
 
 // Dedot-specific context type extending the base
 type DedotContextValue = BasePolkadotContextValue<
-  DedotClient,
-  Partial<Record<ChainId, DedotClient>>,
+  ConfiguredChainApi,
+  Partial<CompositeApi>,
   ChainId
 >;
 
@@ -35,8 +41,10 @@ export function PolkadotProvider({
   const [currentChain, setCurrentChain] = useState<ChainId>(
     defaultChain || (dotUiConfig.defaultChain as ChainId)
   );
-  const [apis, setApis] = useState<Partial<Record<ChainId, DedotClient>>>({});
-  const [clients, setClients] = useState<Map<ChainId, DedotClient>>(new Map());
+  const [apis, setApis] = useState<Partial<CompositeApi>>({});
+  const [clients, setClients] = useState<Map<ChainId, ConfiguredChainApi>>(
+    new Map()
+  );
   const [loadingStates, setLoadingStates] = useState<Map<ChainId, boolean>>(
     new Map()
   );
@@ -71,15 +79,17 @@ export function PolkadotProvider({
 
         await provider.connect();
 
-        const client = await DedotClient.new({
+        const client = await DedotClient.new<AnyChainApi>({
           provider,
           cacheMetadata: true,
         });
 
-        setClients((prev) => new Map(prev).set(chainId, client));
-        setApis((prev: Partial<Record<ChainId, DedotClient>>) => ({
+        setClients((prev) =>
+          new Map(prev).set(chainId, client as ConfiguredChainApi)
+        );
+        setApis((prev: Partial<CompositeApi>) => ({
           ...prev,
-          [chainId]: client,
+          [chainId]: client as CompositeApi[typeof chainId],
         }));
 
         console.log(`Successfully connected to ${chainConfig.displayName}`);
@@ -157,7 +167,7 @@ export function PolkadotProvider({
 
   const value: DedotContextValue = {
     currentChain,
-    api: apis[currentChain] || null,
+    api: apis[currentChain] as ConfiguredChainApi | null,
     error: errorStates.get(currentChain) || null,
     apis,
     setApi,
@@ -183,13 +193,13 @@ export function useDedot(): DedotContextValue {
 }
 
 // Helper to get properly typed API (maintains backward compatibility)
-export function useTypedPolkadotApi(): DedotClient | null {
+export function useTypedPolkadotApi(): ConfiguredChainApi | null {
   const { api } = useDedot();
   return api;
 }
 
 // Helper to get a specific chain's API (type-safe) - similar to papi-provider
-export function usePolkadotApi(chainId: ChainId): DedotClient | null {
+export function usePolkadotApi(chainId: ChainId): ConfiguredChainApi | null {
   const { apis, initializeChain } = useDedot();
 
   // Auto-initialize the chain if not connected
@@ -199,5 +209,5 @@ export function usePolkadotApi(chainId: ChainId): DedotClient | null {
     }
   }, [chainId, apis, initializeChain]);
 
-  return apis[chainId] || null;
+  return (apis[chainId] as ConfiguredChainApi) || null;
 }

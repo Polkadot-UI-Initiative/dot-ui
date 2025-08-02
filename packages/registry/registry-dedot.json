@@ -57,6 +57,10 @@
           "type": "registry:lib"
         },
         {
+          "path": "registry/dot-ui/lib/types.dedot.ts",
+          "type": "registry:lib"
+        },
+        {
           "path": "registry/dot-ui/lib/config.dot-ui.ts",
           "type": "registry:lib"
         }
